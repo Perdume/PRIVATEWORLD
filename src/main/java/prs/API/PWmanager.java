@@ -57,6 +57,13 @@ public final class PWmanager {
             return null;
         }
     }
+    public void CreateWorld(Player p){
+        wrm.Createworld(p);
+    }
+    public void DeleteWorld(World w){
+        wrm.Deleteworld(w.getName());
+    }
+
     public WorldManager getsWorldManager() {
         return wrm;
     }

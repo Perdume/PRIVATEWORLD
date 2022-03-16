@@ -1,6 +1,5 @@
 package prs.Main;
 
-import de.tr7zw.nbtapi.NBTEntity;
 import de.tr7zw.nbtapi.NBTItem;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -8,12 +7,10 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.data.type.RespawnAnchor;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
 import org.bukkit.event.entity.*;
-import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
@@ -22,8 +19,9 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import prs.Data.UserWorldManager;
-import prs.gui.Inv;
 import prs.privateworld.PrivateWorld;
 import prs.world.WorldManager;
 
