@@ -1,0 +1,16 @@
+name: Prs
+version: '${project.version}'
+main: prs.privateworld.PrivateWorld
+api-version: 1.18
+prefix: PrivateWorld
+authors: [ Perdume ]
+depend: [RedLib]
+commands:
+  PrivateWorldAdmin:
+    description: PRS Admin
+    usage: /PrivateWorldAdmin
+    permission: prs.admin
+  PrivateWorld:
+    description: PRS
+    usage: /PrivateWorld
+    aliases: [프라이빗월드, pv]
