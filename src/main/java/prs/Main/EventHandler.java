@@ -1,10 +1,14 @@
 package prs.Main;
 
+import de.tr7zw.nbtapi.NBTBlock;
+import de.tr7zw.nbtapi.NBTEntity;
 import de.tr7zw.nbtapi.NBTItem;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.block.data.type.RespawnAnchor;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -122,9 +126,6 @@ public class EventHandler implements Listener {
 
                 }
             }
-            if (reved != 0) {
-                Bukkit.broadcastMessage(ChatColor.RED + "REMOVED " + reved + " ITEMS");
-            }
         }
     }
     @org.bukkit.event.EventHandler
@@ -132,13 +133,24 @@ public class EventHandler implements Listener {
         wm.inv.setPlayerInventoryOpenned((Player) e.getPlayer(),null);
     }
     @org.bukkit.event.EventHandler
+    public void onMove(PlayerMoveEvent e){
+        Player player = e.getPlayer();
+        ItemStack item = player.getInventory().getItemInMainHand();
+        for (AttributeModifier am : item.getItemMeta().getAttributeModifiers(Attribute.GENERIC_MOVEMENT_SPEED)){
+            ItemStack is = new ItemStack(Material.AIR, 64);
+            player.getInventory().setItemInMainHand(is);
+            player.sendMessage(ChatColor.RED + "[PREVENTION] 해당 아이템에서 서버나 플레이어에 피해를 끼칠만한 NBT가 발견되었습니다");
+        }
+    }
+    @org.bukkit.event.EventHandler
     public void Interact(PlayerInteractEvent e){
         NBTItem nbti = new NBTItem(e.getItem());
-        Bukkit.broadcastMessage(nbti.toString());
         if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-            if (nbti.getCompound().toString().contains("EntityTag") && nbti.getCompound().toString().contains("BlockEntityTag") || nbti.getCompound().toString().contains("Amplifier:29b,Duration:200,Id:6b") || nbti.getCompound().toString().contains("Amplifier:125b,Duration:0,Id:6b")){
-                e.setCancelled(true);
-                e.getPlayer().sendMessage(ChatColor.RED + "[PREVENTION] 해당 아이템에서 서버나 플레이어에 피해를 끼칠만한 NBT가 발견되었습니다");
+            for (String s: nbti.getKeys()){
+                if (s == "CustomPotionEffects" || s == "EntityTag" || s == "BlockEntityTag"){
+                    e.setCancelled(true);
+                    e.getPlayer().sendMessage(ChatColor.RED + "[PREVENTION] 해당 아이템에서 서버나 플레이어에 피해를 끼칠만한 NBT가 발견되었습니다");
+                }
             }
         }
         if (e.getClickedBlock().getType() != null) {
@@ -146,7 +158,6 @@ public class EventHandler implements Listener {
                 RespawnAnchor Anchor = (RespawnAnchor) e.getClickedBlock().getBlockData();
                 if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
                     if (Anchor.getCharges() != 0) {
-                        Bukkit.broadcastMessage(String.valueOf(e.getPlayer().getItemInHand().getType()));
                         try {
                             if (!e.getPlayer().getItemInHand().getType().equals(Material.GLOWSTONE)) {
                                 e.setCancelled(true);
@@ -216,9 +227,10 @@ public class EventHandler implements Listener {
     @org.bukkit.event.EventHandler
     public void Redstone(BlockDispenseEvent e) {
         NBTItem nbti = new NBTItem(e.getItem());
-        Bukkit.broadcastMessage(nbti.toString());
-        if (nbti.getCompound().toString().contains("EntityTag") || nbti.getCompound().toString().contains("Amplifier:29b,Duration:200,Id:6b") || nbti.getCompound().toString().contains("Amplifier:125b,Duration:200,Id:6b")){
-            e.setCancelled(true);
+        for (String s: nbti.getKeys()){
+            if (s == "CustomPotionEffects" || s == "EntityTag"){
+                e.setCancelled(true);
+            }
         }
     }
     @org.bukkit.event.EventHandler
@@ -256,7 +268,7 @@ public class EventHandler implements Listener {
     @org.bukkit.event.EventHandler
     public void spawning(CreatureSpawnEvent e){
         String a= String.valueOf(e.getSpawnReason());
-        Bukkit.broadcastMessage(a);
+        org.bukkit.Bukkit.broadcastMessage(a);
     }
     //* OFFHAND CHANGE *//
     @org.bukkit.event.EventHandler
@@ -270,5 +282,29 @@ public class EventHandler implements Listener {
         if (event.getSlot() == 40) { // I think off hand slot is 40
             event.setCancelled(true);
         }
+    }
+    @org.bukkit.event.EventHandler
+    public void onPotion(EntityPotionEffectEvent e){
+        Bukkit.broadcastMessage(e.getNewEffect().getType().getName());
+    }
+
+    @org.bukkit.event.EventHandler
+    public void onSpawn(EntitySpawnEvent e){
+        NBTEntity nbtent = new NBTEntity(e.getEntity());
+        for (String s: nbtent.getKeys()) {
+            if (s == "Effects") {
+                e.getEntity().remove();
+            }
+            if (s == "Particle") {
+                e.getEntity().remove();
+            }
+            if (s == "ActiveEffects") {
+                e.getEntity().remove();
+            }
+            if (s == "TileEntityData") {
+                e.getEntity().remove();
+            }
+        }
+
     }
 }

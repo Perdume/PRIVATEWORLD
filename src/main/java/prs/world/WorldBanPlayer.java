@@ -12,7 +12,6 @@ public class WorldBanPlayer {
     WorldManager wrm = new WorldManager();
     private PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
     public void BanPlayer(Player player, OfflinePlayer Criminal){
-        Bukkit.broadcastMessage(IsPlayerBanned(Criminal, player.getWorld()).toString());
         if (IsPlayerBanned(Criminal, player.getWorld()).equals(false)) {
             if (Criminal.isOnline()) {
                 Player Criminal2 = (Player) Criminal;

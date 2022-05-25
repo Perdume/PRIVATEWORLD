@@ -1,5 +1,11 @@
 package prs.privateworld;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.events.ListenerPriority;
+import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -24,9 +30,11 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
     public WorldManager worldManager;
     public ConfigManager ConfigManager;
     public Inv inv;
+    private ProtocolManager protocolManager;
 
     @Override
     public void onEnable() {
+        protocolManager = ProtocolLibrary.getProtocolManager();
         instance = this;
         this.inv = new Inv();
         this.worldManager = new WorldManager(this);
@@ -43,6 +51,15 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
         Bukkit.getServer().getPluginManager().registerEvents(new scoreboard(), this);
         Bukkit.getServer().getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(this, this);
+        protocolManager.addPacketListener(
+                new PacketAdapter(this, ListenerPriority.NORMAL,
+                        PacketType.Play.Client.BOAT_MOVE) {
+                    @Override
+                    public void onPacketSending(PacketEvent event) {
+                        // Item packets (id: 0x29)
+                        Bukkit.broadcastMessage(event.getPacket().getType().name());
+                    }
+                });
 
         new BukkitRunnable() {
 
