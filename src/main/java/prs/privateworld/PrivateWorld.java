@@ -24,6 +24,9 @@ import prs.Rollback.WorldRollBack;
 import prs.ScoreBoard.scoreboard;
 import prs.WorldGuard.Lobby;
 import prs.gui.Inv;
+import prs.parkour.Command.ParkourCommand;
+import prs.parkour.Command.ParkourTab;
+import prs.parkour.Function.InParkour;
 
 public final class PrivateWorld extends JavaPlugin implements Listener {
     public static Plugin instance;
@@ -43,24 +46,17 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
         this.getCommand("PrivateWorldAdmin").setTabCompleter(new TabComplete());
         this.getCommand("PrivateWorld").setExecutor(new UserCommand());
         this.getCommand("PrivateWorld").setTabCompleter(new TabComplete());
+        this.getCommand("parkour").setExecutor(new ParkourCommand());
+        this.getCommand("parkour").setTabCompleter(new ParkourTab());
         this.worldManager = new WorldManager(this);
         Bukkit.getServer().getPluginManager().registerEvents(new EventHandler(), this);
         Bukkit.getServer().getPluginManager().registerEvents(new Chating(), this);
         Bukkit.getServer().getPluginManager().registerEvents(new Lobby(), this);
         Bukkit.getServer().getPluginManager().registerEvents(new WorldRollBack(), this);
         Bukkit.getServer().getPluginManager().registerEvents(new scoreboard(), this);
+        Bukkit.getServer().getPluginManager().registerEvents(new InParkour(), this);
         Bukkit.getServer().getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(this, this);
-        protocolManager.addPacketListener(
-                new PacketAdapter(this, ListenerPriority.NORMAL,
-                        PacketType.Play.Client.BOAT_MOVE) {
-                    @Override
-                    public void onPacketSending(PacketEvent event) {
-                        // Item packets (id: 0x29)
-                        Bukkit.broadcastMessage(event.getPacket().getType().name());
-                    }
-                });
-
         new BukkitRunnable() {
 
             @Override

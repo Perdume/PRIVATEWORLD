@@ -14,3 +14,7 @@ commands:
     description: PRS
     usage: /PrivateWorld
     aliases: [프라이빗월드, pv]
+  parkour:
+    description: PRS Addon
+    usage: /parkour
+    aliases: [par, 파쿠르]

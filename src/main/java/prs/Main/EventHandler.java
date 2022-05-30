@@ -136,24 +136,31 @@ public class EventHandler implements Listener {
     public void onMove(PlayerMoveEvent e){
         Player player = e.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
-        for (AttributeModifier am : item.getItemMeta().getAttributeModifiers(Attribute.GENERIC_MOVEMENT_SPEED)){
-            ItemStack is = new ItemStack(Material.AIR, 64);
-            player.getInventory().setItemInMainHand(is);
-            player.sendMessage(ChatColor.RED + "[PREVENTION] 해당 아이템에서 서버나 플레이어에 피해를 끼칠만한 NBT가 발견되었습니다");
+        if (item.getItemMeta() != null) {
+            for (AttributeModifier am : item.getItemMeta().getAttributeModifiers(Attribute.GENERIC_MOVEMENT_SPEED)) {
+                ItemStack is = new ItemStack(Material.AIR, 64);
+                player.getInventory().setItemInMainHand(is);
+                player.sendMessage(ChatColor.RED + "[PREVENTION] 해당 아이템에서 서버나 플레이어에 피해를 끼칠만한 NBT가 발견되었습니다");
+            }
         }
     }
     @org.bukkit.event.EventHandler
-    public void Interact(PlayerInteractEvent e){
-        NBTItem nbti = new NBTItem(e.getItem());
-        if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-            for (String s: nbti.getKeys()){
-                if (s == "CustomPotionEffects" || s == "EntityTag" || s == "BlockEntityTag"){
+    public void CusInteract(PlayerInteractEvent e) {
+        try {
+            NBTItem nbti = new NBTItem(e.getItem());
+            for (String s : nbti.getKeys()) {
+                if (s == "CustomPotionEffects" || s == "EntityTag" || s == "BlockEntityTag") {
                     e.setCancelled(true);
                     e.getPlayer().sendMessage(ChatColor.RED + "[PREVENTION] 해당 아이템에서 서버나 플레이어에 피해를 끼칠만한 NBT가 발견되었습니다");
+                    return;
                 }
             }
         }
-        if (e.getClickedBlock().getType() != null) {
+        catch(Exception ignore){}
+    }
+    @org.bukkit.event.EventHandler
+    public void Interact(PlayerInteractEvent e){
+        if (e.getClickedBlock() != null) {
             if (e.getClickedBlock().getType() == Material.RESPAWN_ANCHOR) {
                 RespawnAnchor Anchor = (RespawnAnchor) e.getClickedBlock().getBlockData();
                 if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
@@ -172,26 +179,28 @@ public class EventHandler implements Listener {
                     }
                 }
             }
-        }
-        if (e.getClickedBlock().getType().toString().contains("SIGN")) {
-            if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                e.setCancelled(true);
+            if (e.getClickedBlock().getType().toString().contains("SIGN")) {
+                if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                    e.setCancelled(true);
+                }
             }
         }
         if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-            if (e.getItem().getType().equals(Material.WRITTEN_BOOK)){
-                ItemStack book = new ItemStack(Material.WRITTEN_BOOK, 1);
-                BookMeta bm = (BookMeta) e.getItem().getItemMeta();
-                BookMeta bm2 = (BookMeta) book.getItemMeta();
-                for (String k: bm.getPages()){
-                    if (k != null) {
-                        bm2.addPage(k);
+            if (e.getItem() != null) {
+                if (e.getItem().getType().equals(Material.WRITTEN_BOOK)) {
+                    ItemStack book = new ItemStack(Material.WRITTEN_BOOK, 1);
+                    BookMeta bm = (BookMeta) e.getItem().getItemMeta();
+                    BookMeta bm2 = (BookMeta) book.getItemMeta();
+                    for (String k : bm.getPages()) {
+                        if (k != null) {
+                            bm2.addPage(k);
+                        }
                     }
+                    bm2.setAuthor(bm.getAuthor());
+                    bm2.setTitle(bm.getTitle());
+                    book.setItemMeta(bm2);
+                    e.getPlayer().setItemInHand(book);
                 }
-                bm2.setAuthor(bm.getAuthor());
-                bm2.setTitle(bm.getTitle());
-                book.setItemMeta(bm2);
-                e.getPlayer().setItemInHand(book);
             }
         }
     }
