@@ -48,7 +48,7 @@ public class InParkour implements Listener {
                     if ((Location) uwpm.getParkourFile().get("EndPoint") == null){
                         if ((Location) uwpm.getParkourFile().get("StartPoint") != e.getClickedBlock().getLocation()) {
                             uwpm.getParkourFile().set("EndPoint", e.getClickedBlock().getLocation());
-                            e.getPlayer().sendMessage(ChatColor.GREEN + "체크포인트를 정해주세요(진행순,중형무게 갑압판 우클릭) 다 만들면 도착부분을 우클릭해주세요(경형무게 갑압판 우클릭)");
+                            e.getPlayer().sendMessage(ChatColor.GREEN + "체크포인트를 정해주세요(진행순,중형무게 갑압판 우클릭) 다 만들면 도착부분을 우클릭해주세요(경형무게 갑압판 우클릭) ");
                         }
 
                     }
