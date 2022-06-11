@@ -136,13 +136,18 @@ public class EventHandler implements Listener {
     public void onMove(PlayerMoveEvent e){
         Player player = e.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getItemMeta() != null) {
-            for (AttributeModifier am : item.getItemMeta().getAttributeModifiers(Attribute.GENERIC_MOVEMENT_SPEED)) {
-                ItemStack is = new ItemStack(Material.AIR, 64);
-                player.getInventory().setItemInMainHand(is);
-                player.sendMessage(ChatColor.RED + "[PREVENTION] 해당 아이템에서 서버나 플레이어에 피해를 끼칠만한 NBT가 발견되었습니다");
+        try {
+            if (item.getItemMeta() != null) {
+                if (item.getItemMeta().getAttributeModifiers() != null) {
+                    for (AttributeModifier am : item.getItemMeta().getAttributeModifiers(Attribute.GENERIC_MOVEMENT_SPEED)) {
+                        ItemStack is = new ItemStack(Material.AIR, 64);
+                        player.getInventory().setItemInMainHand(is);
+                        player.sendMessage(ChatColor.RED + "[PREVENTION] 해당 아이템에서 서버나 플레이어에 피해를 끼칠만한 NBT가 발견되었습니다");
+                    }
+                }
             }
         }
+        catch(Exception ignore){}
     }
     @org.bukkit.event.EventHandler
     public void CusInteract(PlayerInteractEvent e) {
@@ -274,11 +279,6 @@ public class EventHandler implements Listener {
             e.setCancelled(true);
         }
     }
-    @org.bukkit.event.EventHandler
-    public void spawning(CreatureSpawnEvent e){
-        String a= String.valueOf(e.getSpawnReason());
-        org.bukkit.Bukkit.broadcastMessage(a);
-    }
     //* OFFHAND CHANGE *//
     @org.bukkit.event.EventHandler
     public void onSwapHandInv(InventoryClickEvent event) {
@@ -291,10 +291,6 @@ public class EventHandler implements Listener {
         if (event.getSlot() == 40) { // I think off hand slot is 40
             event.setCancelled(true);
         }
-    }
-    @org.bukkit.event.EventHandler
-    public void onPotion(EntityPotionEffectEvent e){
-        Bukkit.broadcastMessage(e.getNewEffect().getType().getName());
     }
 
     @org.bukkit.event.EventHandler

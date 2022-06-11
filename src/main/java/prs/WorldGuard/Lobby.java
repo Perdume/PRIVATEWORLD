@@ -23,6 +23,10 @@ public class Lobby implements Listener {
                 e.getPlayer().teleport(loc);
             }
         }
+        Location loc = (Location) wm.worldManager.getConfig().get("Lobby");
+        if (e.getPlayer().getWorld().getName().equals("world")){
+            e.getPlayer().teleport(loc);
+        }
     }
     @EventHandler
     public void ondamage(EntityDamageEvent e){
