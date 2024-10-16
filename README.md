@@ -4,4 +4,6 @@
 
 >## Bugs(or must improves)
 > 1. Some variables initialized at unknown timing
-> 2. World creation more speedy
+> 2. Create world speedy
+> 3. Config improves
+> 4. Improve code garlicity
