@@ -6,4 +6,4 @@
 > 1. Some variables initialized at unknown timing
 > 2. Create world speedy
 > 3. Config improves
-> 4. Improve code garlicity
+> 4. Improved code readability
