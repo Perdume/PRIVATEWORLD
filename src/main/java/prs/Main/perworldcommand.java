@@ -1,6 +1,7 @@
 package prs.Main;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CommandBlock;
@@ -18,16 +19,11 @@ public class perworldcommand implements Listener {
         Block block = e.getBlock();
 
         if(e.getOldCurrent() == 0 && e.getNewCurrent() > 0){
-            if (block != null){
-                BlockState state = block.getState();
-                if(state != null){
-                    if (state instanceof CommandBlock){
-                        CommandBlock cb = (CommandBlock)state;
-                        if (cb.getCommand().contains("execute") && cb.getCommand().contains("run")){
-                            e.setNewCurrent(e.getOldCurrent());
-                        }
-                    }
-                }
+            if (block.getType() == Material.AIR) return;
+            BlockState state = block.getState();
+            if (!(state instanceof CommandBlock cb)) return;
+            if (cb.getCommand().contains("execute") && cb.getCommand().contains("run")){
+                e.setNewCurrent(e.getOldCurrent());
             }
         }
     }

@@ -3,6 +3,7 @@ package prs.world;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
+import org.bukkit.scheduler.BukkitRunnable;
 import prs.Data.UserWorldManager;
 import prs.privateworld.PrivateWorld;
 
@@ -13,185 +14,106 @@ import java.util.*;
 
 public class WorldManager implements Listener {
     private PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
-    public HashMap<Player,Integer> map1 = new HashMap<>();
-    public void Createworld(Player p){
+    public HashMap<UUID,Integer> Worldnumber = new HashMap<>();
+    public World Createworld(Player p){
+        //CreateWorld
         int a = GetNum(p);
-        map1.put(p, a);
+        Worldnumber.put(p.getUniqueId(), a);
         WorldCreator wc2 = new WorldCreator(p.getUniqueId().toString() + "--" + a);
         wc2.environment(World.Environment.NORMAL);
         wc2.type(WorldType.NORMAL);
         wc2.generateStructures(false);
-        wc2.generator("VoidGenerator");
-        wc2.createWorld();
-        List<String> temp = (List<String>) wm.worldManager.getConfig().getList("PlayerWorlds");
-
-        if (temp == null || wm.worldManager.getConfig().getList("PlayerWorlds") == null) {
-            ArrayList<String> temp1 = new ArrayList<>(Arrays.asList(p.getUniqueId().toString() + "--" + a));
-            temp = temp1;
-            wm.worldManager.getConfig().set("PlayerWorlds", temp);
-        }
-        else {
-            boolean contains = temp.contains(p.getWorld().getName());
-            if (contains == false) {
-                temp.add(p.getUniqueId().toString() + "--" + a);
-                wm.worldManager.getConfig().set("PlayerWorlds", temp);
-            }
-            wm.worldManager.saveconfig();
-        }
-
-        try {
-            worldset(Bukkit.getWorld(p.getUniqueId().toString() + "--" + a));
-        }
-        catch(Exception e) {
-            long time = System.currentTimeMillis();
-            while (System.currentTimeMillis() - time < 100){}
-            worldset(Bukkit.getWorld(p.getUniqueId().toString() + "--" +a));
-        }
+        wc2.generator("VoidGen");
+        World wn = wc2.createWorld();
+        wm.worldManager.Addworld(wn);
+        //SetConfig
+        UserWorldManager wm = new UserWorldManager(wn);
+        wm.createWorld();
+        return wn;
     }
-    public void worldset(World w) {
-        UserWorldManager wm = new UserWorldManager(w);
-        wm.CreateWorld();
+    public void CreatePlayerWorld(Player p){
+        if (PlayerWorldCount(p) == 9) {
+            p.sendMessage(ChatColor.RED + "9개 이상 만들 수 없습니다");
+        }
+        WorldCheck();
+        World w = Createworld(p);
+        wm.worldManager.Addworld(w);
+        World checkingWorld = p.getWorld();
+        Location loc = new Location(w, 0, 65, 0);
+        Location loc2 = new Location(w, 0, 64, 0);
+        loc2.getBlock().setType(Material.BEDROCK);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                p.teleport(loc);
+                if(p.getWorld() != checkingWorld) this.cancel();
+            }
+        }.runTaskTimer(wm, 20, 20);
     }
     public int PlayerWorldCount(Player p){
         int i = 0;
-        List<String> temp = (List<String>) wm.worldManager.getConfig().getList("DefaultWorlds");
-        if (temp != null){
-            try {
-                for (String s1 : temp) {
-                    if (wcon(Bukkit.getWorld(s1)).getUniqueId() == p.getUniqueId()) {
-                        i++;
-                    }
-                }
-                System.out.println(i);
-                return i;
-            }
-            catch(Exception e){
-                return 0;
-            }
-
+        List<World> temp = wm.worldManager.getWorldList();
+        if(temp == null) return 0;
+        for (World s1 : temp) {
+            if (wcon(s1).getUniqueId() == p.getUniqueId()) i++;
         }
-        else{
-            return 0;
-        }
+        return i;
     }
-    public void Deleteworld(String s) {
-        System.out.println(s);
-        List<String> temp = (List<String>) wm.worldManager.getConfig().getList("PlayerWorlds");
-        boolean contains = temp.contains(s);
-        if (contains == true) {
-            temp.remove(s);
-            wm.worldManager.getConfig().set("DefaultWorlds", temp);
-
+    public void Deleteworld(World w) {
+        wm.worldManager.Removeworld(w);
+        for (Player p: w.getPlayers()){
+            p.teleport(wm.worldManager.getLobby());
         }
-        for (Player p: Bukkit.getOnlinePlayers()){
-            if (p.getWorld().getName() == s){
-                p.teleport((Location) wm.worldManager.getConfig().get("Lobby"));
-            }
-        }
-        File UserFile = new File("plugins/PRSUSERSETTING/" + s + ".yml");
+        File UserFile = new File("plugins/PRSUSERSETTING/" + w.getName() + ".yml");
         UserFile.delete();
-        Path releaseFolder = Paths.get(s);
-        Bukkit.unloadWorld(s, false);
+        Path releaseFolder = Paths.get(w.getName());
+        Bukkit.unloadWorld(w.getName(), false);
         WorldManage.deleteFilesRecursively(releaseFolder.toFile());
         wm.worldManager.saveconfig();
     }
-    public Integer WorldCongigNumCheck(String s){
+    public Integer WorldCongigNumCheck(World w){
         int i = 0;
-        List<String> temp = (List<String>) wm.worldManager.getConfig().getList("PlayerWorlds");
-        if (temp != null){
-            for (String s1: temp){
-                if (s1 == s){
-                    i++;
-                }
-            }
+        List<World> temp = wm.worldManager.getWorldList();
+        if (temp == null) return 0;
+        for (World s1: temp){
+            if (Objects.equals(s1, w)) i++;
         }
         return i;
     }
     public Integer GetNum(OfflinePlayer p){
-        List<String> temp = (List<String>) wm.worldManager.getConfig().getList("PlayerWorlds");
+        if(Worldnumber.get(p) != null) return Worldnumber.get(p);
         int i = 1;
         while (true){
-            if (!temp.contains(p.getUniqueId() + "--" + i)){
+            if (Bukkit.getWorld(p.getUniqueId() + "--" + i) == null){
+                Worldnumber.put(p.getUniqueId(), i);
                 return i;
             }
             i++;
         }
     }
     public void WorldCheck(){
-        List<String> temp = (List<String>) wm.worldManager.getConfig().getList("PlayerWorlds");
-        if (temp != null){
-            for (Iterator<String> itr = temp.iterator(); itr.hasNext();){
-                 String s2 = itr.next();
-                if (s2 != null) {
-                    try {
-                        World w = Bukkit.getWorld(s2);
-                        if (WorldCongigNumCheck(s2) >= 1) {
-                            itr.remove();
-                        }
-                    }
-                    catch (Exception e){
-                        itr.remove();
-                    }
-                }
-            }
+        List<World> temp = wm.worldManager.getWorldList();
+        if (temp == null) return;
+        for (Iterator<World> itr = temp.iterator(); itr.hasNext();){
+            World s2 = itr.next();
+            if (s2 == null) continue;
+            if (WorldCongigNumCheck(s2) >= 1) itr.remove();
         }
         for (World w: Bukkit.getWorlds()){
-            if (w.getName().contains("--")) {
-                if (temp != null) {
-                    if (!temp.contains(w.getName())) {
-                        temp.add(w.getName());
-                    }
-                }
-                else{
-                    ArrayList<String> temp1 = new ArrayList<>(Arrays.asList(w.getName()));
-                    temp = temp1;
-                }
-            }
+            if (!w.getName().contains("--")) continue;
+            if (!temp.contains(w)) wm.worldManager.Addworld(w);
         }
-        wm.worldManager.getConfig().set("PlayerWorlds", temp);
-        wm.worldManager.saveconfig();
     }
     public OfflinePlayer wcon(World w){
-        try {
-            if (w.getName().contains("--")) {
-                String[] arr = w.getName().split("--");
-                try {
-                    OfflinePlayer p = Bukkit.getServer().getOfflinePlayer(UUID.fromString(arr[0]));
-                    return p;
-                } catch (Exception e) {
-                    return null;
-                }
-            } else {
-                return null;
-            }
-        }
-        catch (Exception e){
-            return null;
-        }
+        if (!w.getName().contains("--")) return null;
+        String[] arr = w.getName().split("--");
+        OfflinePlayer p = Bukkit.getServer().getOfflinePlayer(UUID.fromString(arr[0]));
+        return p;
     }
     public Boolean isPlayerhasWorld(OfflinePlayer p){
         for(World w: Bukkit.getWorlds()){
-            if (wcon(w) == p){
-                return true;
-            }
+            if (wcon(w) == p) return true;
         }
         return false;
-    }
-    public List<World> GetPrivateWorlds(){
-        List<String> temp = (List<String>) wm.worldManager.getConfig().getList("PlayerWorlds");
-        List<World> temp2 = new ArrayList<>();
-        for(String s: temp){
-            temp2.add(Bukkit.getWorld(s));
-        }
-        return temp2;
-    }
-    public Integer PlayerHasWorld(OfflinePlayer p){
-        int i = 0;
-        for(World w: Bukkit.getWorlds()){
-            if (wcon(w) == p){
-                i++;
-            }
-        }
-        return i;
     }
 }

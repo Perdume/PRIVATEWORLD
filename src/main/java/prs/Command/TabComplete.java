@@ -22,45 +22,33 @@ public class TabComplete implements TabCompleter {
             Player player = (Player) sender;
             if (command.getName().equalsIgnoreCase("프라이빗월드")) {
                 if (args.length == 1) {
-                    List<String> list = new ArrayList<>(Arrays.asList("생성", "삭제", "방문", "옵션"));
-                    return list;
+                    return new ArrayList<>(Arrays.asList("생성", "삭제", "방문", "옵션"));
                 }
             }
             if (command.getName().equalsIgnoreCase("privateworld")) {
                 if (args.length == 1) {
-                    List<String> list = new ArrayList<>(Arrays.asList("create", "delete", "visit", "option", "myworld", "ban", "unban", "lobby", "head"));
-                    return list;
+                    return new ArrayList<>(Arrays.asList("create", "delete", "visit", "option", "myworld", "ban", "unban", "lobby", "head"));
                 }
                 if (args.length == 2) {
-                    if (args[0].equalsIgnoreCase("ban")) {
-                        List<String> list = new ArrayList<>();
-                        for (OfflinePlayer p : Bukkit.getOfflinePlayers()) {
-                            if (wb.IsPlayerBanned(p, player.getWorld()) == false) {
-                                list.add(p.getName());
-                            }
-                        }
-                        return list;
-                    }
-                }
-                if (args.length == 2) {
-                    if (args[0].equalsIgnoreCase("unban")) {
-                        List<String> list = new ArrayList<>();
-                        for (OfflinePlayer p : Bukkit.getOfflinePlayers()) {
-                            if (wb.IsPlayerBanned(p, player.getWorld()) == true) {
-                                list.add(p.getName());
-                            }
-                        }
-                        return list;
-                    }
+                    if (args[0].equalsIgnoreCase("ban")) return getBannedPlayer(player, true);
+                    if (args[0].equalsIgnoreCase("unban")) return getBannedPlayer(player, false);
                 }
             }
             if (command.getName().equalsIgnoreCase("privateworldAdmin")) {
                 if (args.length == 1) {
-                    List<String> list = new ArrayList<>(Arrays.asList("worldlist", "delall"));
-                    return list;
+                    return new ArrayList<>(Arrays.asList("worldlist", "delall"));
                 }
             }
         }
         return null;
+    }
+
+    public List<String> getBannedPlayer(Player player, Boolean isBanned){
+        List<String> list = new ArrayList<>();
+        for (OfflinePlayer p : Bukkit.getOfflinePlayers()) {
+            if (wb.IsPlayerBanned(p, player.getWorld()) == isBanned) continue;
+            list.add(p.getName());
+        }
+        return list;
     }
 }

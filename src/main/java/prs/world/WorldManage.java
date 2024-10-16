@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class WorldManage {
+
+    //Abandoned: 혹시 몰라 남김(코드수정X)
     private World world;
     public void copyWorld(File source, File target){
         try {
