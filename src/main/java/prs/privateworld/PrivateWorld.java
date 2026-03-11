@@ -11,6 +11,7 @@ import prs.Command.TabComplete;
 import prs.Command.UserCommand;
 import prs.Data.ConfigManager;
 import prs.Data.WorldConfig;
+import prs.Data.WorkshopManager;
 import prs.Main.Chatting;
 import prs.Main.EventHandler;
 import prs.ScoreBoard.scoreboard;
@@ -20,6 +21,7 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
     public static Plugin instance;
     public WorldConfig worldManager;
     public ConfigManager configManager;
+    public WorkshopManager workshopManager;
     public prs.world.WorldManager Worlds;
 
     @Override
@@ -27,6 +29,7 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
         instance = this;
         this.worldManager = new WorldConfig(this);
         this.configManager = new ConfigManager(this);
+        this.workshopManager = new WorkshopManager(this);
         this.Worlds = new WorldManager();
         this.getCommand("PrivateWorldAdmin").setExecutor(new AdminCommand());
         this.getCommand("PrivateWorldAdmin").setTabCompleter(new TabComplete());

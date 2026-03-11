@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import prs.gui.ChoosePlayerWorld;
+import prs.gui.GUI_Workshop;
 import prs.gui.PlayerWorldList;
 import prs.gui.option;
 import prs.privateworld.PrivateWorld;
@@ -122,6 +123,11 @@ public class UserCommand implements CommandExecutor {
         else if (args[0].equalsIgnoreCase("도움말") || args[0].equalsIgnoreCase("help")) {
             sendHelp(player);
         }
+        else if (args[0].equalsIgnoreCase("워크샵") || args[0].equalsIgnoreCase("workshop")) {
+            GUI_Workshop ws = new GUI_Workshop(player);
+            Bukkit.getPluginManager().registerEvents(ws, wm);
+            ws.openInventory(player);
+        }
         else {
             player.sendMessage(ChatColor.RED + "알 수 없는 명령어입니다. /privateworld help 를 사용하세요");
         }
@@ -140,5 +146,6 @@ public class UserCommand implements CommandExecutor {
         player.sendMessage(ChatColor.YELLOW + "/privateworld ban <플레이어>" + ChatColor.WHITE + " - 플레이어를 밴합니다");
         player.sendMessage(ChatColor.YELLOW + "/privateworld unban <플레이어>" + ChatColor.WHITE + " - 플레이어 밴을 해제합니다");
         player.sendMessage(ChatColor.YELLOW + "/privateworld head <플레이어>" + ChatColor.WHITE + " - 플레이어 머리를 가져옵니다");
+        player.sendMessage(ChatColor.YELLOW + "/privateworld workshop" + ChatColor.WHITE + " - 워크샵을 엽니다 (프리셋 공유)");
     }
 }

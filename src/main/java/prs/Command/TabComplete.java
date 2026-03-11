@@ -21,7 +21,7 @@ public class TabComplete implements TabCompleter {
         if (sender instanceof Player player) {
             if (command.getName().equalsIgnoreCase("프라이빗월드")) {
                 if (args.length == 1) {
-                    return new ArrayList<>(Arrays.asList("생성", "삭제", "방문", "옵션", "내월드", "로비", "밴", "언밴", "머리", "도움말"));
+                    return new ArrayList<>(Arrays.asList("생성", "삭제", "방문", "옵션", "내월드", "로비", "밴", "언밴", "머리", "도움말", "워크샵"));
                 }
                 if (args.length == 2) {
                     if (args[0].equalsIgnoreCase("밴")) return getUnbannedPlayers(player);
@@ -30,7 +30,7 @@ public class TabComplete implements TabCompleter {
             }
             if (command.getName().equalsIgnoreCase("privateworld")) {
                 if (args.length == 1) {
-                    return new ArrayList<>(Arrays.asList("create", "delete", "visit", "option", "myworld", "ban", "unban", "lobby", "head", "help"));
+                    return new ArrayList<>(Arrays.asList("create", "delete", "visit", "option", "myworld", "ban", "unban", "lobby", "head", "help", "workshop"));
                 }
                 if (args.length == 2) {
                     if (args[0].equalsIgnoreCase("ban")) return getUnbannedPlayers(player);
@@ -39,7 +39,8 @@ public class TabComplete implements TabCompleter {
             }
             if (command.getName().equalsIgnoreCase("privateworldAdmin")) {
                 if (args.length == 1) {
-                    return new ArrayList<>(Arrays.asList("addmap", "delmap", "delall", "SetLobby", "Worlds", "ReloadScore", "TestSpawn", "reload"));
+                    return new ArrayList<>(Arrays.asList("addmap", "delmap", "delall", "SetLobby", "Worlds",
+                            "ReloadScore", "TestSpawn", "reload", "workshoplist", "workshopdelete"));
                 }
             }
         }

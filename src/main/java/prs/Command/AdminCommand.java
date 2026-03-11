@@ -31,7 +31,7 @@ public class AdminCommand implements CommandExecutor {
             WorldManager wrm = new WorldManager();
             if (args.length == 0) {
                 player.sendMessage(ChatColor.GOLD + "=== PrivateWorld Admin ===");
-                player.sendMessage(ChatColor.YELLOW + "addmap, delmap, delall, SetLobby, Worlds, ReloadScore, TestSpawn, reload");
+                player.sendMessage(ChatColor.YELLOW + "addmap, delmap, delall, SetLobby, Worlds, ReloadScore, TestSpawn, reload, workshoplist, workshopdelete <name>");
                 return true;
             }
             try {
@@ -81,6 +81,32 @@ public class AdminCommand implements CommandExecutor {
                 else if (args[0].equalsIgnoreCase("reload")) {
                     wm.configManager.reloadConfig();
                     player.sendMessage(ChatColor.GREEN + "설정 파일을 다시 로드했습니다");
+                }
+                else if (args[0].equalsIgnoreCase("workshoplist")) {
+                    java.util.List<String> ids = wm.workshopManager.getAllPresetIds();
+                    if (ids.isEmpty()) {
+                        player.sendMessage(ChatColor.YELLOW + "등록된 워크샵 프리셋이 없습니다");
+                    } else {
+                        player.sendMessage(ChatColor.GOLD + "=== 워크샵 프리셋 목록 (" + ids.size() + "개) ===");
+                        for (String id : ids) {
+                            player.sendMessage(ChatColor.YELLOW + wm.workshopManager.getPresetName(id)
+                                    + ChatColor.GRAY + " | 제작자: " + ChatColor.GREEN
+                                    + wm.workshopManager.getPresetAuthorName(id));
+                        }
+                    }
+                }
+                else if (args[0].equalsIgnoreCase("workshopdelete")) {
+                    if (args.length < 2) {
+                        player.sendMessage(ChatColor.RED + "사용법: /prsadmin workshopdelete <프리셋이름>");
+                        return true;
+                    }
+                    String presetId = wm.workshopManager.findPresetIdByName(args[1]);
+                    if (presetId == null) {
+                        player.sendMessage(ChatColor.RED + "해당 이름의 프리셋을 찾을 수 없습니다: " + args[1]);
+                    } else {
+                        wm.workshopManager.deletePreset(presetId);
+                        player.sendMessage(ChatColor.GREEN + "프리셋 '" + args[1] + "' 을 삭제했습니다");
+                    }
                 }
             } catch (Exception e) {
                 player.sendMessage(ChatColor.RED + e.getMessage() + "\n" + ChatColor.GREEN + e.getCause());
