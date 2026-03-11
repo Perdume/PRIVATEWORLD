@@ -72,7 +72,7 @@ public class UserWorldManager {
         for (WorldOption option : WorldOption.values()) {
             getConfig().set(option.getPath(), false);
         }
-        saveUserFile();
+        saveConfig();
     }
 
     private void saveConfig() {
@@ -100,25 +100,25 @@ public class UserWorldManager {
 
     public void setOption(WorldOption option, boolean value) {
         getConfig().set(option.getPath(), value);
-        saveUserFile();
+        saveConfig();
     }
     public void toggleOption(WorldOption option) {
         boolean value = getOption(option);
         getConfig().set(option.getPath(), !value);
-        saveUserFile();
+        saveConfig();
     }
     public boolean setGameMode(GameMode gameMode){
         getConfig().set("Option.Gamemode", gameMode);
-        saveUserFile();
+        saveConfig();
         return true;
     }
     public void getGameMode(GameMode gameMode){
         getConfig().set("Option.Gamemode", gameMode);
-        saveUserFile();
+        saveConfig();
     }
     public boolean setWorldName(String name){
         getConfig().set("Option.Name", name);
-        saveUserFile();
+        saveConfig();
         return true;
     }
     public String getWorldName(){
@@ -127,7 +127,7 @@ public class UserWorldManager {
 
     public boolean setSpawnLocation(Location location){
         getConfig().set("Option.TeleportLocation", location);
-        saveUserFile();
+        saveConfig();
         return true;
     }
     public Location getSpawnLocation(Location location){

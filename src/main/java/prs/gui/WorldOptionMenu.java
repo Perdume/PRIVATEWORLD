@@ -27,7 +27,7 @@ public class WorldOptionMenu implements Listener {
     UserWorldManager worldSettings;
     World world;
 
-    public option(Player p, World world) {
+    public WorldOptionMenu(Player p, World world) {
         inv = Bukkit.createInventory(null, 27, "Option");
         this.p = p;
         this.world = (world == null) ? p.getWorld() : world;

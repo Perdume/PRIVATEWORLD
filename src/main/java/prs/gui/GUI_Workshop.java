@@ -228,7 +228,7 @@ public class GUI_Workshop implements Listener {
             return;
         }
         UserWorldManager worldSettings = new UserWorldManager(w);
-        WorldBanPlayer   wb  = new WorldBanPlayer();
+        WorldBanPlayer banManager = new WorldBanPlayer();
         UUID ownerUuid = plugin.workshopManager.getPublishedAuthor(worldName);
 
         if (worldSettings.getOption(UserWorldManager.WorldOption.PRIVATE) &&
