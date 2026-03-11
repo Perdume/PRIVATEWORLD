@@ -33,7 +33,7 @@ public class UserCommand implements CommandExecutor {
         if (args[0].equalsIgnoreCase("생성") || args[0].equalsIgnoreCase("create")) {
             int maxWorlds = plugin.configManager.getMaxWorlds();
             if (worldMgr.playerWorldCount(player) < maxWorlds) {
-                plugin.Worlds.createPlayerWorld(player);
+                plugin.worlds.createPlayerWorld(player);
             } else {
                 player.sendMessage(ChatColor.RED + maxWorlds + "개 이상 만들 수 없습니다");
             }

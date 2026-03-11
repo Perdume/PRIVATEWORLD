@@ -14,11 +14,11 @@ import java.util.*;
 
 public class WorldManager implements Listener {
     private PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
-    public HashMap<UUID,Integer> Worldnumber = new HashMap<>();
+    public HashMap<UUID,Integer> worldNumbers = new HashMap<>();
     public World buildWorld(Player p){
         //CreateWorld
         int a = getWorldNumber(p);
-        Worldnumber.put(p.getUniqueId(), a);
+        worldNumbers.put(p.getUniqueId(), a);
         WorldCreator wc2 = new WorldCreator(p.getUniqueId().toString() + "--" + a);
         wc2.environment(World.Environment.NORMAL);
         wc2.type(WorldType.NORMAL);
@@ -86,11 +86,12 @@ public class WorldManager implements Listener {
         return i;
     }
     public Integer getWorldNumber(OfflinePlayer p){
-        if(Worldnumber.get(p.getUniqueId()) != null) return Worldnumber.get(p.getUniqueId());
+        Integer cached = worldNumbers.get(p.getUniqueId());
+        if (cached != null) return cached;
         int i = 1;
         while (true){
             if (Bukkit.getWorld(p.getUniqueId() + "--" + i) == null){
-                Worldnumber.put(p.getUniqueId(), i);
+                worldNumbers.put(p.getUniqueId(), i);
                 return i;
             }
             i++;

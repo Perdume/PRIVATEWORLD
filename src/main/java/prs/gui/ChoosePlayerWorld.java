@@ -109,7 +109,7 @@ public class ChoosePlayerWorld implements Listener {
         }
         GameMode gameMode = (GameMode) worldSettings.getConfig().get("Option.Gamemode");
         if(gameMode == null) gameMode = GameMode.ADVENTURE;
-        Location TPloc = (Location) worldSettings.getConfig().get("Option.TeleportLocation");
+        Location TPloc = worldSettings.getSpawnLocation();
         if(TPloc == null) TPloc = new Location(w, 0, 64, 0);
         p.teleport(TPloc);
         p.setGameMode(gameMode);

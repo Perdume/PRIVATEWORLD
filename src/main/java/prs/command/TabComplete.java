@@ -37,7 +37,7 @@ public class TabComplete implements TabCompleter {
                     if (args[0].equalsIgnoreCase("unban")) return getBannedPlayers(player);
                 }
             }
-            if (command.getName().equalsIgnoreCase("privateworldAdmin")) {
+            if (command.getName().equalsIgnoreCase("PrivateWorldAdmin")) {
                 if (args.length == 1) {
                     return new ArrayList<>(Arrays.asList("addmap", "delmap", "delall", "SetLobby", "Worlds",
                             "ReloadScore", "TestSpawn", "reload", "workshoplist", "workshopdelete",

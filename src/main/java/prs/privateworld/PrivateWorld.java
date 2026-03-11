@@ -22,7 +22,7 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
     public WorldConfig worldManager;
     public ConfigManager configManager;
     public WorkshopManager workshopManager;
-    public prs.world.WorldManager Worlds;
+    public prs.world.WorldManager worlds;
 
     @Override
     public void onEnable() {
@@ -30,7 +30,7 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
         this.worldManager = new WorldConfig(this);
         this.configManager = new ConfigManager(this);
         this.workshopManager = new WorkshopManager(this);
-        this.Worlds = new WorldManager();
+        this.worlds = new WorldManager();
         this.getCommand("PrivateWorldAdmin").setExecutor(new AdminCommand());
         this.getCommand("PrivateWorldAdmin").setTabCompleter(new TabComplete());
         this.getCommand("PrivateWorld").setExecutor(new UserCommand());
@@ -41,11 +41,11 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
         Bukkit.getServer().getPluginManager().registerEvents(this, this);
         // Update scoreboard every 4 seconds (80 ticks) instead of every second
         new BukkitRunnable() {
+            private final WorldScoreboard scoreboard = new WorldScoreboard();
             @Override
             public void run() {
                 for (Player player : Bukkit.getOnlinePlayers()) {
-                    WorldScoreboard sc = new WorldScoreboard();
-                    sc.updateScoreboard(player);
+                    scoreboard.updateScoreboard(player);
                 }
             }
         }.runTaskTimer(this, 20L, 80L);

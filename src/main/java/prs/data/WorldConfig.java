@@ -20,8 +20,8 @@ public class WorldConfig {
     private PrivateWorld plugin;
     private FileConfiguration dataconfig = null;
     private File configfile = null;
-    List<World> worldlist = new LinkedList<>();
-    List<String> DefaultWorlds = new ArrayList<>();
+    List<World> worldList = new LinkedList<>();
+    List<String> defaultWorlds = new ArrayList<>();
     Location lobby = null;
 
     public WorldConfig(PrivateWorld plugin){
@@ -71,30 +71,30 @@ public class WorldConfig {
     }
     //PlayerWorlds
     public List<World> getWorldList(){
-        if(!worldlist.isEmpty()) return worldlist;
+        if(!worldList.isEmpty()) return worldList;
         List<String> Templist = (List<String>) getConfig().getList("Locs.PlayerWorlds");
         for(String s: Templist){
-            worldlist.add(Bukkit.getWorld(s));
+            worldList.add(Bukkit.getWorld(s));
         }
-        return worldlist;
+        return worldList;
     }
     public boolean removeWorld(World w){
-        if(!worldlist.contains(w)) return false;
-        worldlist.remove(w);
+        if(!worldList.contains(w)) return false;
+        worldList.remove(w);
         return true;
     }
     public boolean addWorld(World w){
-        if(worldlist.contains(w)) return false;
-        worldlist.add(w);
+        if(worldList.contains(w)) return false;
+        worldList.add(w);
         return true;
     }
     public boolean save(){
         List<String> WorldNameList = new ArrayList<>();
-        for(World w: worldlist){
+        for(World w: worldList){
             WorldNameList.add(w.getName());
         }
         getConfig().set("Locs.PlayerWorlds", WorldNameList);
-        getConfig().set("Locs.DefaultWorlds", DefaultWorlds);
+        getConfig().set("Locs.defaultWorlds", defaultWorlds);
         getConfig().set("Locs.Lobby", lobby);
         saveConfig();
         return true;
@@ -102,18 +102,18 @@ public class WorldConfig {
 
     //Default Worlds
     public List<String> getDefaultWorldList(){
-        if(!DefaultWorlds.isEmpty()) return DefaultWorlds;
-        DefaultWorlds = (List<String>) getConfig().getList("Locs.DefaultWorlds");
-        return DefaultWorlds;
+        if(!defaultWorlds.isEmpty()) return defaultWorlds;
+        defaultWorlds = (List<String>) getConfig().getList("Locs.defaultWorlds");
+        return defaultWorlds;
     }
     public boolean removeDefaultWorld(String worldname){
-        if(!DefaultWorlds.contains(worldname)) return false;
-        DefaultWorlds.remove(worldname);
+        if(!defaultWorlds.contains(worldname)) return false;
+        defaultWorlds.remove(worldname);
         return true;
     }
     public boolean addDefaultWorld(String worldname){
-        if(DefaultWorlds.contains(worldname)) return false;
-        DefaultWorlds.add(worldname);
+        if(defaultWorlds.contains(worldname)) return false;
+        defaultWorlds.add(worldname);
         return true;
     }
     public Location getLobby(){

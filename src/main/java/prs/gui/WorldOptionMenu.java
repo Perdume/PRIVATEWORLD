@@ -56,8 +56,8 @@ public class WorldOptionMenu implements Listener {
     protected ItemStack createGuiItem(final Material material, final String name, Boolean isEnabled, final String... lore) {
         final ItemStack item = new ItemStack(material, 1);
         final ItemMeta meta = item.getItemMeta();
-        String _name = (isEnabled == null) ? name : ((isEnabled ? ChatColor.GREEN : ChatColor.RED) + name);
-        meta.setDisplayName(_name);
+        String displayName = (isEnabled == null) ? name : ((isEnabled ? ChatColor.GREEN : ChatColor.RED) + name);
+        meta.setDisplayName(displayName);
         meta.setLore(Arrays.asList(lore));
         item.setItemMeta(meta);
         return item;

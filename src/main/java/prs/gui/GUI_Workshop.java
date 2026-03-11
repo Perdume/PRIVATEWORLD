@@ -242,7 +242,7 @@ public class GUI_Workshop implements Listener {
         }
         GameMode gm = (GameMode) worldSettings.getConfig().get("Option.Gamemode");
         if (gm == null) gm = GameMode.ADVENTURE;
-        Location loc = (Location) worldSettings.getConfig().get("Option.TeleportLocation");
+        Location loc = worldSettings.getSpawnLocation();
         if (loc == null) loc = new Location(w, 0, 64, 0);
         p.teleport(loc);
         p.setGameMode(gm);

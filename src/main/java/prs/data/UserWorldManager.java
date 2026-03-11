@@ -112,9 +112,8 @@ public class UserWorldManager {
         saveConfig();
         return true;
     }
-    public void getGameMode(GameMode gameMode){
-        getConfig().set("Option.Gamemode", gameMode);
-        saveConfig();
+    public GameMode getGameMode(){
+        return (GameMode) getConfig().get("Option.Gamemode");
     }
     public boolean setWorldName(String name){
         getConfig().set("Option.Name", name);
@@ -130,7 +129,7 @@ public class UserWorldManager {
         saveConfig();
         return true;
     }
-    public Location getSpawnLocation(Location location){
+    public Location getSpawnLocation(){
         return (Location) getConfig().get("Option.TeleportLocation");
     }
 }
