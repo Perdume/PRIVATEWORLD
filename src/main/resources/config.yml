@@ -1,1 +1,4 @@
 #Custom CONFIG
+
+# Maximum number of private worlds a player can own (default: 3)
+max-worlds: 3

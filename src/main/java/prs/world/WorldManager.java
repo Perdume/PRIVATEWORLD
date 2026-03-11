@@ -32,8 +32,10 @@ public class WorldManager implements Listener {
         return wn;
     }
     public void CreatePlayerWorld(Player p){
-        if (PlayerWorldCount(p) == 9) {
-            p.sendMessage(ChatColor.RED + "9개 이상 만들 수 없습니다");
+        int maxWorlds = wm.configManager.getMaxWorlds();
+        if (PlayerWorldCount(p) >= maxWorlds) {
+            p.sendMessage(ChatColor.RED + maxWorlds + "개 이상 만들 수 없습니다");
+            return;
         }
         WorldCheck();
         World w = Createworld(p);
@@ -55,7 +57,8 @@ public class WorldManager implements Listener {
         List<World> temp = wm.worldManager.getWorldList();
         if(temp == null) return 0;
         for (World s1 : temp) {
-            if (wcon(s1).getUniqueId() == p.getUniqueId()) i++;
+            OfflinePlayer owner = wcon(s1);
+            if (owner != null && owner.getUniqueId().equals(p.getUniqueId())) i++;
         }
         return i;
     }
@@ -81,7 +84,7 @@ public class WorldManager implements Listener {
         return i;
     }
     public Integer GetNum(OfflinePlayer p){
-        if(Worldnumber.get(p) != null) return Worldnumber.get(p);
+        if(Worldnumber.get(p.getUniqueId()) != null) return Worldnumber.get(p.getUniqueId());
         int i = 1;
         while (true){
             if (Bukkit.getWorld(p.getUniqueId() + "--" + i) == null){
@@ -112,7 +115,8 @@ public class WorldManager implements Listener {
     }
     public Boolean isPlayerhasWorld(OfflinePlayer p){
         for(World w: Bukkit.getWorlds()){
-            if (wcon(w) == p) return true;
+            OfflinePlayer owner = wcon(w);
+            if (owner != null && owner.getUniqueId().equals(p.getUniqueId())) return true;
         }
         return false;
     }

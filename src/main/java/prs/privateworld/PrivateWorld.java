@@ -18,13 +18,15 @@ import prs.world.WorldManager;
 
 public final class PrivateWorld extends JavaPlugin implements Listener {
     public static Plugin instance;
-    public WorldConfig worldManager;//Config
+    public WorldConfig worldManager;
+    public ConfigManager configManager;
     public prs.world.WorldManager Worlds;
 
     @Override
     public void onEnable() {
         instance = this;
         this.worldManager = new WorldConfig(this);
+        this.configManager = new ConfigManager(this);
         this.Worlds = new WorldManager();
         this.getCommand("PrivateWorldAdmin").setExecutor(new AdminCommand());
         this.getCommand("PrivateWorldAdmin").setTabCompleter(new TabComplete());
@@ -34,28 +36,20 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
         Bukkit.getServer().getPluginManager().registerEvents(new Chatting(), this);
         Bukkit.getServer().getPluginManager().registerEvents(new scoreboard(), this);
         Bukkit.getServer().getPluginManager().registerEvents(this, this);
-        Bukkit.getPluginManager().registerEvents(this, this);
+        // Update scoreboard every 4 seconds (80 ticks) instead of every second
         new BukkitRunnable() {
-
             @Override
             public void run() {
-
-                for(Player player : Bukkit.getOnlinePlayers()) {
+                for (Player player : Bukkit.getOnlinePlayers()) {
                     scoreboard sc = new scoreboard();
                     sc.updateScoreboard(player);
                 }
-
             }
-
-        }.runTaskTimer(this, 20L, 20L);
-
-
+        }.runTaskTimer(this, 20L, 80L);
     }
 
     @Override
     public void onDisable() {
         worldManager.save();
     }
-
-
 }

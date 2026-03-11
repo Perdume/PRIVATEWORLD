@@ -27,7 +27,9 @@ public class UserWorldManager {
         CAN_INTERACT("Option.canInteract"),
         REDSTONE("Option.Redstone"),
         CAN_PVP("Option.canPVP"),
-        CAN_SHOW_FIREWORK("Option.canshowFirework");
+        CAN_SHOW_FIREWORK("Option.canshowFirework"),
+        WEATHER("Option.Weather"),
+        TIME_LOCK("Option.TimeLock");
 
         private final String path;
 

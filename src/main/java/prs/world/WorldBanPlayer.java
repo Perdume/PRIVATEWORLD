@@ -12,7 +12,7 @@ public class WorldBanPlayer {
     WorldManager wrm = new WorldManager();
     private PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
     public void BanPlayer(Player player, OfflinePlayer Criminal){
-        if (IsPlayerBanned(Criminal, player.getWorld()).equals(false)) {
+        if (IsPlayerBanned(Criminal, player.getWorld()).equals(true)) {
             player.sendMessage(ChatColor.RED + "이미 밴되어있습니다");
             return;
         }

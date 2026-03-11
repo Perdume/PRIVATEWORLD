@@ -102,7 +102,7 @@ public class WorldConfig {
 
     //Default Worlds
     public List<String> getDefaultWorldList(){
-        if(DefaultWorlds.isEmpty()) return DefaultWorlds;
+        if(!DefaultWorlds.isEmpty()) return DefaultWorlds;
         DefaultWorlds = (List<String>) getConfig().getList("Locs.DefaultWorlds");
         return DefaultWorlds;
     }

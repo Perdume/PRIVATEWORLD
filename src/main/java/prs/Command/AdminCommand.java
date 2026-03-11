@@ -19,57 +19,58 @@ import prs.privateworld.PrivateWorld;
 import prs.world.WorldManager;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class AdminCommand implements CommandExecutor {
-    private PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
+    private final PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (sender instanceof Player player) {
             scoreboard sc = new scoreboard();
             WorldManager wrm = new WorldManager();
+            if (args.length == 0) {
+                player.sendMessage(ChatColor.GOLD + "=== PrivateWorld Admin ===");
+                player.sendMessage(ChatColor.YELLOW + "addmap, delmap, delall, SetLobby, Worlds, ReloadScore, TestSpawn, reload");
+                return true;
+            }
             try {
-                //Addmap
                 if (args[0].equalsIgnoreCase("addmap")) {
-                    if(wm.worldManager.AddDefaultworld(player.getWorld().getName())){
+                    if (wm.worldManager.AddDefaultworld(player.getWorld().getName())) {
                         player.sendMessage(ChatColor.GREEN + "Successfully added");
-                    }
-                    else player.sendMessage(ChatColor.RED + "Already added!");
+                    } else player.sendMessage(ChatColor.RED + "Already added!");
                 }
-                //Delmap
-                if (args[0].equalsIgnoreCase("delmap")) {
-                    if(wm.worldManager.RemoveDefaultworld(player.getWorld().getName())){
+                else if (args[0].equalsIgnoreCase("delmap")) {
+                    if (wm.worldManager.RemoveDefaultworld(player.getWorld().getName())) {
                         player.sendMessage(ChatColor.GREEN + "Successfully deleted");
-                    }
-                    else player.sendMessage(ChatColor.RED + "There is no map!");
+                    } else player.sendMessage(ChatColor.RED + "There is no map!");
                 }
-                if (args[0].equalsIgnoreCase("delall")) {
-                    List<World> temp = wm.worldManager.getWorldList();
+                else if (args[0].equalsIgnoreCase("delall")) {
+                    List<World> temp = new ArrayList<>(wm.worldManager.getWorldList());
                     player.sendMessage(String.valueOf(temp));
                     for (World s : temp) {
                         wrm.Deleteworld(s);
                     }
                 }
-                if (args[0].equalsIgnoreCase("SetLobby")) {
+                else if (args[0].equalsIgnoreCase("SetLobby")) {
                     wm.worldManager.setLobby(player.getLocation());
                     player.sendMessage(ChatColor.GREEN + "SuccessFully Location Set!");
                     wm.worldManager.saveconfig();
                 }
-                if(args[0].equalsIgnoreCase("Worlds")){
+                else if (args[0].equalsIgnoreCase("Worlds")) {
                     WorldList wl = new WorldList(player);
                     Bukkit.getPluginManager().registerEvents(wl, wm);
                     wl.openInventory(player);
                 }
-                if (args[0].equalsIgnoreCase("ReloadScore")) {
-                    for (Player p: Bukkit.getOnlinePlayers()) {
+                else if (args[0].equalsIgnoreCase("ReloadScore")) {
+                    for (Player p : Bukkit.getOnlinePlayers()) {
                         if (Helper.hasScore(p)) {
                             Helper.removeScore(p);
                         }
                         sc.createScoreboard(p);
                     }
                 }
-                if (args[0].equalsIgnoreCase("TestSpawn")) {
+                else if (args[0].equalsIgnoreCase("TestSpawn")) {
                     Entity am = player.getWorld().spawnEntity(player.getLocation(), EntityType.ZOMBIE);
                     am.setGlowing(true);
                     am.setCustomName("IM TEST");
@@ -77,13 +78,16 @@ public class AdminCommand implements CommandExecutor {
                     ((Monster) am).setTarget(player);
                     ((Monster) am).getEquipment().setHelmet(new ItemStack(Material.GOLDEN_HELMET));
                 }
-            }
-            catch(Exception e){
+                else if (args[0].equalsIgnoreCase("reload")) {
+                    wm.configManager.reloadConfig();
+                    player.sendMessage(ChatColor.GREEN + "설정 파일을 다시 로드했습니다");
+                }
+            } catch (Exception e) {
                 player.sendMessage(ChatColor.RED + e.getMessage() + "\n" + ChatColor.GREEN + e.getCause());
             }
         }
         return true;
     }
-
 }
+
 
