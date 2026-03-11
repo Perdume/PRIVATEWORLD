@@ -1,4 +1,4 @@
-name: Prs
+name: PrivateWorld
 version: '${project.version}'
 main: prs.privateworld.PrivateWorld
 api-version: 1.18

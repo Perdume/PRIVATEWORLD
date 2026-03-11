@@ -6,15 +6,15 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import prs.Command.AdminCommand;
-import prs.Command.TabComplete;
-import prs.Command.UserCommand;
-import prs.Data.ConfigManager;
-import prs.Data.WorldConfig;
-import prs.Data.WorkshopManager;
-import prs.Main.Chatting;
-import prs.Main.EventHandler;
-import prs.ScoreBoard.scoreboard;
+import prs.command.AdminCommand;
+import prs.command.TabComplete;
+import prs.command.UserCommand;
+import prs.data.ConfigManager;
+import prs.data.WorldConfig;
+import prs.data.WorkshopManager;
+import prs.main.Chatting;
+import prs.main.EventHandler;
+import prs.scoreboard.WorldScoreboard;
 import prs.world.WorldManager;
 
 public final class PrivateWorld extends JavaPlugin implements Listener {
@@ -37,14 +37,14 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
         this.getCommand("PrivateWorld").setTabCompleter(new TabComplete());
         Bukkit.getServer().getPluginManager().registerEvents(new EventHandler(), this);
         Bukkit.getServer().getPluginManager().registerEvents(new Chatting(), this);
-        Bukkit.getServer().getPluginManager().registerEvents(new scoreboard(), this);
+        Bukkit.getServer().getPluginManager().registerEvents(new WorldScoreboard(), this);
         Bukkit.getServer().getPluginManager().registerEvents(this, this);
         // Update scoreboard every 4 seconds (80 ticks) instead of every second
         new BukkitRunnable() {
             @Override
             public void run() {
                 for (Player player : Bukkit.getOnlinePlayers()) {
-                    scoreboard sc = new scoreboard();
+                    WorldScoreboard sc = new WorldScoreboard();
                     sc.updateScoreboard(player);
                 }
             }

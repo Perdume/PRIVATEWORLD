@@ -1,4 +1,4 @@
-package prs.Data;
+package prs.data;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -171,14 +171,14 @@ public class WorkshopManager {
      * preset. Returns the newly generated preset ID.
      */
     public String savePreset(Player author, String presetName, World world) {
-        UserWorldManager uwm = new UserWorldManager(world);
+        UserWorldManager worldSettings = new UserWorldManager(world);
         String id = UUID.randomUUID().toString();
         String base = PRESETS_ROOT + "." + id;
         presetConfig.set(base + ".name", presetName);
         presetConfig.set(base + ".author", author.getUniqueId().toString());
         presetConfig.set(base + ".authorName", author.getName());
         for (UserWorldManager.WorldOption opt : UserWorldManager.WorldOption.values()) {
-            presetConfig.set(base + ".options." + opt.name(), uwm.getOption(opt));
+            presetConfig.set(base + ".options." + opt.name(), worldSettings.getOption(opt));
         }
         save();
         return id;
@@ -191,10 +191,10 @@ public class WorkshopManager {
     public boolean applyPreset(String presetId, World world) {
         String base = PRESETS_ROOT + "." + presetId;
         if (!presetConfig.contains(base)) return false;
-        UserWorldManager uwm = new UserWorldManager(world);
+        UserWorldManager worldSettings = new UserWorldManager(world);
         for (UserWorldManager.WorldOption opt : UserWorldManager.WorldOption.values()) {
             boolean val = presetConfig.getBoolean(base + ".options." + opt.name(), false);
-            uwm.setOption(opt, val);
+            worldSettings.setOption(opt, val);
         }
         return true;
     }

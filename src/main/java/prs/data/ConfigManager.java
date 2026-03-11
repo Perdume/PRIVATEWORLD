@@ -1,4 +1,4 @@
-package prs.Data;
+package prs.data;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -37,7 +37,7 @@ public class ConfigManager {
         }
         return this.dataconfig;
     }
-    public void saveconfig(){
+    public void saveConfig(){
         if (this.dataconfig == null || this.configfile == null){
             return;
         }

@@ -1,4 +1,4 @@
-package prs.Main;
+package prs.main;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -12,8 +12,8 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
 import prs.privateworld.PrivateWorld;
 
-public class perworldcommand implements Listener {
-    private PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
+public class PerWorldCommand implements Listener {
+    private PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
     @EventHandler
     public void redstoneChanges(BlockRedstoneEvent e){
         Block block = e.getBlock();

@@ -1,4 +1,4 @@
-package prs.Main;
+package prs.main;
 
 import de.tr7zw.nbtapi.NBTEntity;
 import de.tr7zw.nbtapi.NBTItem;
@@ -21,32 +21,32 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
-import prs.Data.UserWorldManager;
+import prs.data.UserWorldManager;
 import prs.privateworld.PrivateWorld;
 import prs.world.WorldManager;
 
 import java.util.*;
 
 public class EventHandler implements Listener {
-    private PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
-    WorldManager wrm = new WorldManager();
+    private PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
+    WorldManager worldMgr = new WorldManager();
 
     @org.bukkit.event.EventHandler
     public void PlayerJoin(PlayerLoginEvent e) {
         e.getPlayer().getInventory().clear();
-        if (!wm.worldManager.isLobbySet()) return;
-        Location loc = wm.worldManager.getLobby();
+        if (!plugin.worldManager.isLobbySet()) return;
+        Location loc = plugin.worldManager.getLobby();
         e.getPlayer().teleport(loc);
     }
 
     @org.bukkit.event.EventHandler
     public void Onjoin(PlayerJoinEvent e) {
         e.getPlayer().getInventory().clear();
-        if (!wm.worldManager.isLobbySet()) return;
-        Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(wm, new Runnable() {
+        if (!plugin.worldManager.isLobbySet()) return;
+        Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
             public void run() {
-                Location loc = wm.worldManager.getLobby();
+                Location loc = plugin.worldManager.getLobby();
                 e.getPlayer().teleport(loc);
             }
         }, 1);
@@ -54,30 +54,30 @@ public class EventHandler implements Listener {
 
     @org.bukkit.event.EventHandler
     public void OnDrop(PlayerDropItemEvent e) {
-        if (wrm.wcon(e.getPlayer().getWorld()) == null) return;
-        UserWorldManager uwm = new UserWorldManager(e.getPlayer().getWorld());
-        if (uwm.getOption(UserWorldManager.WorldOption.CAN_DROP)) return;
-        if (!wrm.wcon(e.getPlayer().getWorld()).getUniqueId().equals(e.getPlayer().getUniqueId())) {
+        if (worldMgr.getWorldOwner(e.getPlayer().getWorld()) == null) return;
+        UserWorldManager worldSettings = new UserWorldManager(e.getPlayer().getWorld());
+        if (worldSettings.getOption(UserWorldManager.WorldOption.CAN_DROP)) return;
+        if (!worldMgr.getWorldOwner(e.getPlayer().getWorld()).getUniqueId().equals(e.getPlayer().getUniqueId())) {
             e.setCancelled(true);
         }
     }
 
     @org.bukkit.event.EventHandler
     public void OnBreak(BlockBreakEvent e) {
-        if (wrm.wcon(e.getPlayer().getWorld()) == null) return;
-        UserWorldManager uwm = new UserWorldManager(e.getPlayer().getWorld());
-        if (uwm.getOption(UserWorldManager.WorldOption.CAN_BREAK)) return;
-        if (!wrm.wcon(e.getPlayer().getWorld()).getUniqueId().equals(e.getPlayer().getUniqueId())) {
+        if (worldMgr.getWorldOwner(e.getPlayer().getWorld()) == null) return;
+        UserWorldManager worldSettings = new UserWorldManager(e.getPlayer().getWorld());
+        if (worldSettings.getOption(UserWorldManager.WorldOption.CAN_BREAK)) return;
+        if (!worldMgr.getWorldOwner(e.getPlayer().getWorld()).getUniqueId().equals(e.getPlayer().getUniqueId())) {
             e.setCancelled(true);
         }
     }
 
     @org.bukkit.event.EventHandler
     public void OnPlace(BlockPlaceEvent e) {
-        if (wrm.wcon(e.getPlayer().getWorld()) == null) return;
-        UserWorldManager uwm = new UserWorldManager(e.getPlayer().getWorld());
-        if (wrm.wcon(e.getPlayer().getWorld()).getUniqueId().equals(e.getPlayer().getUniqueId())) return;
-        if (!uwm.getOption(UserWorldManager.WorldOption.CAN_PLACE)) {
+        if (worldMgr.getWorldOwner(e.getPlayer().getWorld()) == null) return;
+        UserWorldManager worldSettings = new UserWorldManager(e.getPlayer().getWorld());
+        if (worldMgr.getWorldOwner(e.getPlayer().getWorld()).getUniqueId().equals(e.getPlayer().getUniqueId())) return;
+        if (!worldSettings.getOption(UserWorldManager.WorldOption.CAN_PLACE)) {
             e.setCancelled(true);
         }
     }
@@ -85,10 +85,10 @@ public class EventHandler implements Listener {
     @org.bukkit.event.EventHandler
     public void OnShoot(EntityShootBowEvent e) {
         if (!(e.getEntity() instanceof Player p)) return;
-        if (wrm.wcon(p.getWorld()) == null) return;
-        UserWorldManager uwm = new UserWorldManager(p.getWorld());
-        if (wrm.wcon(p.getWorld()).getUniqueId().equals(p.getUniqueId())) return;
-        if (!uwm.getOption(UserWorldManager.WorldOption.CAN_SHOOT)) {
+        if (worldMgr.getWorldOwner(p.getWorld()) == null) return;
+        UserWorldManager worldSettings = new UserWorldManager(p.getWorld());
+        if (worldMgr.getWorldOwner(p.getWorld()).getUniqueId().equals(p.getUniqueId())) return;
+        if (!worldSettings.getOption(UserWorldManager.WorldOption.CAN_SHOOT)) {
             e.setCancelled(true);
         }
     }
@@ -168,10 +168,10 @@ public class EventHandler implements Listener {
             if (s.equals(arr.get(0))) return;
         }
         if (e.getPlayer().isOp()) return;
-        if (wrm.wcon(e.getPlayer().getWorld()) != null) {
-            UserWorldManager uwm = new UserWorldManager(e.getPlayer().getWorld());
-            if (!uwm.getOption(UserWorldManager.WorldOption.CAN_COMMAND)
-                    && !wrm.wcon(e.getPlayer().getWorld()).getUniqueId().equals(e.getPlayer().getUniqueId())) {
+        if (worldMgr.getWorldOwner(e.getPlayer().getWorld()) != null) {
+            UserWorldManager worldSettings = new UserWorldManager(e.getPlayer().getWorld());
+            if (!worldSettings.getOption(UserWorldManager.WorldOption.CAN_COMMAND)
+                    && !worldMgr.getWorldOwner(e.getPlayer().getWorld()).getUniqueId().equals(e.getPlayer().getUniqueId())) {
                 e.setCancelled(true);
             }
         } else e.setCancelled(true);
@@ -179,8 +179,8 @@ public class EventHandler implements Listener {
 
     @org.bukkit.event.EventHandler
     public void Redstone(BlockRedstoneEvent e) {
-        UserWorldManager uwm = new UserWorldManager(e.getBlock().getWorld());
-        if (!uwm.getOption(UserWorldManager.WorldOption.REDSTONE)) {
+        UserWorldManager worldSettings = new UserWorldManager(e.getBlock().getWorld());
+        if (!worldSettings.getOption(UserWorldManager.WorldOption.REDSTONE)) {
             e.setNewCurrent(e.getOldCurrent());
         }
     }
@@ -198,31 +198,31 @@ public class EventHandler implements Listener {
 
     @org.bukkit.event.EventHandler
     public void PvP(EntityDamageByEntityEvent e) {
-        UserWorldManager uwm = new UserWorldManager(e.getEntity().getWorld());
-        if (uwm.getOption(UserWorldManager.WorldOption.CAN_PVP)) return;
+        UserWorldManager worldSettings = new UserWorldManager(e.getEntity().getWorld());
+        if (worldSettings.getOption(UserWorldManager.WorldOption.CAN_PVP)) return;
         if (e.getEntity().getType() == EntityType.PLAYER && e.getDamager().getType() == EntityType.PLAYER)
             e.setCancelled(true);
     }
 
     @org.bukkit.event.EventHandler
     public void FireWork(FireworkExplodeEvent e) {
-        UserWorldManager uwm = new UserWorldManager(e.getEntity().getWorld());
-        if (uwm.getOption(UserWorldManager.WorldOption.CAN_SHOW_FIREWORK)) return;
+        UserWorldManager worldSettings = new UserWorldManager(e.getEntity().getWorld());
+        if (worldSettings.getOption(UserWorldManager.WorldOption.CAN_SHOW_FIREWORK)) return;
         e.setCancelled(true);
         e.getEntity().remove();
     }
 
     @org.bukkit.event.EventHandler
     public void piston(BlockPistonExtendEvent e) {
-        UserWorldManager uwm = new UserWorldManager(e.getBlock().getWorld());
-        if (uwm.getOption(UserWorldManager.WorldOption.REDSTONE)) return;
+        UserWorldManager worldSettings = new UserWorldManager(e.getBlock().getWorld());
+        if (worldSettings.getOption(UserWorldManager.WorldOption.REDSTONE)) return;
         e.setCancelled(true);
     }
 
     @org.bukkit.event.EventHandler
     public void piston(BlockPistonRetractEvent e) {
-        UserWorldManager uwm = new UserWorldManager(e.getBlock().getWorld());
-        if (uwm.getOption(UserWorldManager.WorldOption.REDSTONE)) return;
+        UserWorldManager worldSettings = new UserWorldManager(e.getBlock().getWorld());
+        if (worldSettings.getOption(UserWorldManager.WorldOption.REDSTONE)) return;
         e.setCancelled(true);
     }
 
@@ -249,9 +249,9 @@ public class EventHandler implements Listener {
     /** Prevent weather changes in worlds where the owner has disabled weather. */
     @org.bukkit.event.EventHandler
     public void onWeatherChange(WeatherChangeEvent e) {
-        if (wrm.wcon(e.getWorld()) == null) return;
-        UserWorldManager uwm = new UserWorldManager(e.getWorld());
-        if (!uwm.getOption(UserWorldManager.WorldOption.WEATHER) && e.toWeatherState()) {
+        if (worldMgr.getWorldOwner(e.getWorld()) == null) return;
+        UserWorldManager worldSettings = new UserWorldManager(e.getWorld());
+        if (!worldSettings.getOption(UserWorldManager.WorldOption.WEATHER) && e.toWeatherState()) {
             e.setCancelled(true);
         }
     }
@@ -259,9 +259,9 @@ public class EventHandler implements Listener {
     /** Freeze time in worlds where TIME_LOCK is enabled. */
     @org.bukkit.event.EventHandler
     public void onTimeSkip(TimeSkipEvent e) {
-        if (wrm.wcon(e.getWorld()) == null) return;
-        UserWorldManager uwm = new UserWorldManager(e.getWorld());
-        if (uwm.getOption(UserWorldManager.WorldOption.TIME_LOCK)) {
+        if (worldMgr.getWorldOwner(e.getWorld()) == null) return;
+        UserWorldManager worldSettings = new UserWorldManager(e.getWorld());
+        if (worldSettings.getOption(UserWorldManager.WorldOption.TIME_LOCK)) {
             e.setCancelled(true);
         }
     }

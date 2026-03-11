@@ -12,8 +12,8 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import prs.Data.WorkshopManager.ContentType;
-import prs.Main.Chatting;
+import prs.data.WorkshopManager.ContentType;
+import prs.main.Chatting;
 import prs.privateworld.PrivateWorld;
 
 import java.util.Arrays;
@@ -29,7 +29,7 @@ public class GUI_TypeSelect implements Listener {
     private static final int[] TYPE_SLOTS = {10, 12, 14, 19, 21, 23};
 
     private final Inventory inv;
-    private final PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
+    private final PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
     private final Player p;
 
     public GUI_TypeSelect(Player p) {
@@ -80,7 +80,7 @@ public class GUI_TypeSelect implements Listener {
                         + ChatColor.GREEN + "' 유형이 선택되었습니다.");
                 player.sendMessage(ChatColor.GREEN + "채팅으로 콘텐츠 제목을 입력하세요. 취소하려면 Quit 을 입력하세요.");
                 Chatting cht = new Chatting();
-                cht.Chatset(player, "WorkshopPublish:" + chosen.name(), player.getWorld());
+                cht.startChatInput(player, "WorkshopPublish:" + chosen.name(), player.getWorld());
                 return;
             }
         }

@@ -1,4 +1,4 @@
-package prs.Command;
+package prs.command;
 
 import org.bukkit.*;
 import org.bukkit.command.Command;
@@ -10,7 +10,7 @@ import org.bukkit.inventory.meta.SkullMeta;
 import prs.gui.ChoosePlayerWorld;
 import prs.gui.GUI_Workshop;
 import prs.gui.PlayerWorldList;
-import prs.gui.option;
+import prs.gui.WorldOptionMenu;
 import prs.privateworld.PrivateWorld;
 import prs.world.WorldBanPlayer;
 import prs.world.WorldManager;
@@ -18,7 +18,7 @@ import prs.world.WorldManager;
 import java.util.Objects;
 
 public class UserCommand implements CommandExecutor {
-    private final PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
+    private final PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -27,48 +27,48 @@ public class UserCommand implements CommandExecutor {
             sendHelp(player);
             return true;
         }
-        WorldBanPlayer wb = new WorldBanPlayer();
-        WorldManager wrm = new WorldManager();
+        WorldBanPlayer banManager = new WorldBanPlayer();
+        WorldManager worldMgr = new WorldManager();
 
         if (args[0].equalsIgnoreCase("생성") || args[0].equalsIgnoreCase("create")) {
-            int maxWorlds = wm.configManager.getMaxWorlds();
-            if (wrm.PlayerWorldCount(player) < maxWorlds) {
-                wm.Worlds.CreatePlayerWorld(player);
+            int maxWorlds = plugin.configManager.getMaxWorlds();
+            if (worldMgr.playerWorldCount(player) < maxWorlds) {
+                plugin.Worlds.createPlayerWorld(player);
             } else {
                 player.sendMessage(ChatColor.RED + maxWorlds + "개 이상 만들 수 없습니다");
             }
         }
         else if (args[0].equalsIgnoreCase("삭제") || args[0].equalsIgnoreCase("delete")) {
-            if (wrm.wcon(player.getWorld()) == null
-                    || !wrm.wcon(player.getWorld()).getUniqueId().equals(player.getUniqueId())) {
+            if (worldMgr.getWorldOwner(player.getWorld()) == null
+                    || !worldMgr.getWorldOwner(player.getWorld()).getUniqueId().equals(player.getUniqueId())) {
                 player.sendMessage(ChatColor.RED + "본인 월드에서 시도해주세요");
             } else {
-                wrm.Deleteworld(player.getWorld());
+                worldMgr.deleteWorld(player.getWorld());
             }
         }
         else if (args[0].equalsIgnoreCase("옵션") || args[0].equalsIgnoreCase("option")) {
-            if (wrm.wcon(player.getWorld()) == null
-                    || !wrm.wcon(player.getWorld()).getUniqueId().equals(player.getUniqueId())) {
+            if (worldMgr.getWorldOwner(player.getWorld()) == null
+                    || !worldMgr.getWorldOwner(player.getWorld()).getUniqueId().equals(player.getUniqueId())) {
                 player.sendMessage(ChatColor.RED + "본인 월드에서 시도해주세요");
             } else {
-                option option = new option(player, player.getWorld());
-                Bukkit.getPluginManager().registerEvents(option, wm);
+                WorldOptionMenu option = new WorldOptionMenu(player, player.getWorld());
+                Bukkit.getPluginManager().registerEvents(option, plugin);
                 option.openInventory(player);
             }
         }
         else if (args[0].equalsIgnoreCase("방문") || args[0].equalsIgnoreCase("visit")) {
             PlayerWorldList pg = new PlayerWorldList(player);
-            Bukkit.getPluginManager().registerEvents(pg, wm);
+            Bukkit.getPluginManager().registerEvents(pg, plugin);
             pg.openInventory(player);
         }
         else if (args[0].equalsIgnoreCase("내월드") || args[0].equalsIgnoreCase("myworld")) {
             ChoosePlayerWorld cpw = new ChoosePlayerWorld(player, player);
-            Bukkit.getPluginManager().registerEvents(cpw, wm);
+            Bukkit.getPluginManager().registerEvents(cpw, plugin);
             cpw.openInventory(player);
         }
         else if (args[0].equalsIgnoreCase("로비") || args[0].equalsIgnoreCase("lobby")) {
-            if (wm.worldManager.isLobbySet()) {
-                player.teleport(wm.worldManager.getLobby());
+            if (plugin.worldManager.isLobbySet()) {
+                player.teleport(plugin.worldManager.getLobby());
             } else {
                 player.sendMessage(ChatColor.RED + "로비 위치가 설정되지 않았습니다");
             }
@@ -78,14 +78,14 @@ public class UserCommand implements CommandExecutor {
                 player.sendMessage(ChatColor.RED + "사용법: /privateworld ban <플레이어>");
                 return true;
             }
-            if (wrm.wcon(player.getWorld()) == null
-                    || !wrm.wcon(player.getWorld()).getUniqueId().equals(player.getUniqueId())) {
+            if (worldMgr.getWorldOwner(player.getWorld()) == null
+                    || !worldMgr.getWorldOwner(player.getWorld()).getUniqueId().equals(player.getUniqueId())) {
                 player.sendMessage(ChatColor.RED + "본인 월드에서 시도해주세요");
                 return true;
             }
             for (OfflinePlayer p1 : Bukkit.getOfflinePlayers()) {
                 if (args[1].equalsIgnoreCase(p1.getName())) {
-                    wb.BanPlayer(player, p1);
+                    banManager.banPlayer(player, p1);
                     return true;
                 }
             }
@@ -96,14 +96,14 @@ public class UserCommand implements CommandExecutor {
                 player.sendMessage(ChatColor.RED + "사용법: /privateworld unban <플레이어>");
                 return true;
             }
-            if (wrm.wcon(player.getWorld()) == null
-                    || !wrm.wcon(player.getWorld()).getUniqueId().equals(player.getUniqueId())) {
+            if (worldMgr.getWorldOwner(player.getWorld()) == null
+                    || !worldMgr.getWorldOwner(player.getWorld()).getUniqueId().equals(player.getUniqueId())) {
                 player.sendMessage(ChatColor.RED + "본인 월드에서 시도해주세요");
                 return true;
             }
             for (OfflinePlayer p1 : Bukkit.getOfflinePlayers()) {
                 if (args[1].equalsIgnoreCase(p1.getName())) {
-                    wb.UnbanPlayer(player, p1);
+                    banManager.unbanPlayer(player, p1);
                     return true;
                 }
             }
@@ -125,7 +125,7 @@ public class UserCommand implements CommandExecutor {
         }
         else if (args[0].equalsIgnoreCase("워크샵") || args[0].equalsIgnoreCase("workshop")) {
             GUI_Workshop ws = new GUI_Workshop(player);
-            Bukkit.getPluginManager().registerEvents(ws, wm);
+            Bukkit.getPluginManager().registerEvents(ws, plugin);
             ws.openInventory(player);
         }
         else {

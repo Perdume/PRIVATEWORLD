@@ -16,9 +16,9 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import prs.Data.UserWorldManager;
-import prs.Data.WorkshopManager;
-import prs.Data.WorkshopManager.ContentType;
+import prs.data.UserWorldManager;
+import prs.data.WorkshopManager;
+import prs.data.WorkshopManager.ContentType;
 import prs.privateworld.PrivateWorld;
 import prs.world.WorldBanPlayer;
 import prs.world.WorldManager;
@@ -75,8 +75,8 @@ public class GUI_Workshop implements Listener {
     private enum Screen { MAIN, CATEGORY }
 
     private final Inventory inv;
-    private final PrivateWorld wm  = PrivateWorld.getPlugin(PrivateWorld.class);
-    private final WorldManager wrm = new WorldManager();
+    private final PrivateWorld plugin  = PrivateWorld.getPlugin(PrivateWorld.class);
+    private final WorldManager worldMgr = new WorldManager();
     private final Player p;
 
     private Screen screen = Screen.MAIN;
@@ -109,13 +109,13 @@ public class GUI_Workshop implements Listener {
         ContentType[] types = ContentType.values();
         for (int i = 0; i < types.length; i++) {
             ContentType ct = types[i];
-            int count = wm.workshopManager.getPublishedWorldsByType(ct).size();
+            int count = plugin.workshopManager.getPublishedWorldsByType(ct).size();
             inv.setItem(CATEGORY_SLOTS[i], makeTypeItem(ct, count));
         }
 
         // "Register" button – only shown when the player is in their own world
         if (isInOwnWorld()) {
-            String statusLore = wm.workshopManager.isPublished(p.getWorld().getName())
+            String statusLore = plugin.workshopManager.isPublished(p.getWorld().getName())
                     ? ChatColor.YELLOW + "이미 등록된 월드입니다. 클릭하여 재등록"
                     : ChatColor.GRAY  + "현재 월드를 워크샵에 등록합니다";
             inv.setItem(SLOT_REGISTER, makeItem(Material.WRITABLE_BOOK,
@@ -151,7 +151,7 @@ public class GUI_Workshop implements Listener {
         screen = Screen.CATEGORY;
         selectedCategory = type;
         page = 1;
-        categoryWorlds = wm.workshopManager.getPublishedWorldsByType(type);
+        categoryWorlds = plugin.workshopManager.getPublishedWorldsByType(type);
         renderCategoryPage();
     }
 
@@ -183,10 +183,10 @@ public class GUI_Workshop implements Listener {
     }
 
     private ItemStack makeWorldItem(String worldName) {
-        WorkshopManager wsm = wm.workshopManager;
-        String title      = wsm.getPublishedTitle(worldName);
-        String authorName = wsm.getPublishedAuthorName(worldName);
-        UUID   authorId   = wsm.getPublishedAuthor(worldName);
+        WorkshopManager workshopMgr = plugin.workshopManager;
+        String title      = workshopMgr.getPublishedTitle(worldName);
+        String authorName = workshopMgr.getPublishedAuthorName(worldName);
+        UUID   authorId   = workshopMgr.getPublishedAuthor(worldName);
 
         boolean isOwn  = authorId != null && authorId.equals(p.getUniqueId());
         boolean online = Bukkit.getWorld(worldName) != null;
@@ -217,8 +217,8 @@ public class GUI_Workshop implements Listener {
     }
 
     private boolean isInOwnWorld() {
-        if (wrm.wcon(p.getWorld()) == null) return false;
-        return wrm.wcon(p.getWorld()).getUniqueId().equals(p.getUniqueId());
+        if (worldMgr.getWorldOwner(p.getWorld()) == null) return false;
+        return worldMgr.getWorldOwner(p.getWorld()).getUniqueId().equals(p.getUniqueId());
     }
 
     private void teleportToWorld(String worldName) {
@@ -227,22 +227,22 @@ public class GUI_Workshop implements Listener {
             p.sendMessage(ChatColor.RED + "해당 월드가 현재 오프라인입니다");
             return;
         }
-        UserWorldManager uwm = new UserWorldManager(w);
+        UserWorldManager worldSettings = new UserWorldManager(w);
         WorldBanPlayer   wb  = new WorldBanPlayer();
-        UUID ownerUuid = wm.workshopManager.getPublishedAuthor(worldName);
+        UUID ownerUuid = plugin.workshopManager.getPublishedAuthor(worldName);
 
-        if (uwm.getOption(UserWorldManager.WorldOption.PRIVATE) &&
+        if (worldSettings.getOption(UserWorldManager.WorldOption.PRIVATE) &&
                 (ownerUuid == null || !ownerUuid.equals(p.getUniqueId()))) {
             p.sendMessage(ChatColor.RED + "해당 월드는 비공개 상태입니다");
             return;
         }
-        if (wb.IsPlayerBanned(p, w)) {
+        if (banManager.isPlayerBanned(p, w)) {
             p.sendMessage(ChatColor.RED + "해당 월드에 입장할 수 없습니다");
             return;
         }
-        GameMode gm = (GameMode) uwm.getWorldFile().get("Option.Gamemode");
+        GameMode gm = (GameMode) worldSettings.getConfig().get("Option.Gamemode");
         if (gm == null) gm = GameMode.ADVENTURE;
-        Location loc = (Location) uwm.getWorldFile().get("Option.TeleportLocation");
+        Location loc = (Location) worldSettings.getConfig().get("Option.TeleportLocation");
         if (loc == null) loc = new Location(w, 0, 64, 0);
         p.teleport(loc);
         p.setGameMode(gm);
@@ -255,7 +255,7 @@ public class GUI_Workshop implements Listener {
 
     private void openPresetGui() {
         GUI_Workshop_Presets pg = new GUI_Workshop_Presets(p);
-        Bukkit.getPluginManager().registerEvents(pg, wm);
+        Bukkit.getPluginManager().registerEvents(pg, plugin);
         pg.openInventory(p);
     }
 
@@ -298,7 +298,7 @@ public class GUI_Workshop implements Listener {
             }
             player.closeInventory();
             GUI_TypeSelect ts = new GUI_TypeSelect(player);
-            Bukkit.getPluginManager().registerEvents(ts, wm);
+            Bukkit.getPluginManager().registerEvents(ts, plugin);
             ts.openInventory(player);
             return;
         }
@@ -332,16 +332,16 @@ public class GUI_Workshop implements Listener {
             String worldName = categoryWorlds.get(idx);
 
             if (rightClick) {
-                UUID authorId = wm.workshopManager.getPublishedAuthor(worldName);
+                UUID authorId = plugin.workshopManager.getPublishedAuthor(worldName);
                 if ((authorId == null || !authorId.equals(player.getUniqueId())) && !player.isOp()) {
                     player.sendMessage(ChatColor.RED + "자신의 월드만 등록 취소할 수 있습니다");
                     return;
                 }
-                String title = wm.workshopManager.getPublishedTitle(worldName);
-                wm.workshopManager.unpublishWorld(worldName);
+                String title = plugin.workshopManager.getPublishedTitle(worldName);
+                plugin.workshopManager.unpublishWorld(worldName);
                 player.sendMessage(ChatColor.GREEN + "'" + ChatColor.YELLOW + title
                         + ChatColor.GREEN + "' 의 워크샵 등록이 취소되었습니다");
-                categoryWorlds = wm.workshopManager.getPublishedWorldsByType(selectedCategory);
+                categoryWorlds = plugin.workshopManager.getPublishedWorldsByType(selectedCategory);
                 renderCategoryPage();
             } else {
                 teleportToWorld(worldName);

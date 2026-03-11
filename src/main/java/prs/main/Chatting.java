@@ -1,4 +1,4 @@
-package prs.Main;
+package prs.main;
 
 import org.bukkit.ChatColor;
 import org.bukkit.World;
@@ -6,8 +6,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import prs.Data.UserWorldManager;
-import prs.Data.WorkshopManager;
+import prs.data.UserWorldManager;
+import prs.data.WorkshopManager;
 import prs.privateworld.PrivateWorld;
 
 import java.util.HashMap;
@@ -33,9 +33,9 @@ public class Chatting implements Listener {
         }
 
         if (Objects.equals(msgType, "Name")) {
-            UserWorldManager uwm = new UserWorldManager(world.get(e.getPlayer()));
+            UserWorldManager worldSettings = new UserWorldManager(world.get(e.getPlayer()));
             String name = ChatColor.translateAlternateColorCodes('&', e.getMessage());
-            uwm.SetWorldName(name);
+            worldSettings.setWorldName(name);
             e.getPlayer().sendMessage(ChatColor.GREEN + "성공적으로 월드 이름을 설정했습니다");
             Chooseing.put(e.getPlayer(), false);
 
@@ -45,8 +45,8 @@ public class Chatting implements Listener {
                 e.getPlayer().sendMessage(ChatColor.RED + "프리셋 이름이 비어있습니다. 다시 입력해주세요.");
                 return;
             }
-            PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
-            wm.workshopManager.savePreset(e.getPlayer(), presetName, world.get(e.getPlayer()));
+            PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
+            plugin.workshopManager.savePreset(e.getPlayer(), presetName, world.get(e.getPlayer()));
             e.getPlayer().sendMessage(ChatColor.GREEN + "프리셋 '"
                     + ChatColor.YELLOW + presetName + ChatColor.GREEN + "' 이 저장되었습니다!");
             Chooseing.put(e.getPlayer(), false);
@@ -65,9 +65,9 @@ public class Chatting implements Listener {
                 e.getPlayer().sendMessage(ChatColor.RED + "제목이 비어있습니다. 다시 입력해주세요.");
                 return;
             }
-            PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
+            PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
             World w = world.get(e.getPlayer());
-            wm.workshopManager.publishWorld(e.getPlayer(), w.getName(), type, title);
+            plugin.workshopManager.publishWorld(e.getPlayer(), w.getName(), type, title);
             e.getPlayer().sendMessage(ChatColor.GREEN + "'"
                     + type.color + title
                     + ChatColor.GREEN + "' 이(가) 워크샵에 등록되었습니다! ["
@@ -76,7 +76,7 @@ public class Chatting implements Listener {
         }
     }
 
-    public void Chatset(Player p, String s, World w) {
+    public void startChatInput(Player p, String s, World w) {
         Chooseing.put(p, true);
         msg.put(p, s);
         world.put(p, w);

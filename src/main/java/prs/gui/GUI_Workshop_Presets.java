@@ -13,8 +13,8 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import prs.Data.WorkshopManager;
-import prs.Main.Chatting;
+import prs.data.WorkshopManager;
+import prs.main.Chatting;
 import prs.privateworld.PrivateWorld;
 import prs.world.WorldManager;
 
@@ -46,8 +46,8 @@ public class GUI_Workshop_Presets implements Listener {
     private static final int SLOT_NEXT  = 53;
 
     private final Inventory inv;
-    private final PrivateWorld wm  = PrivateWorld.getPlugin(PrivateWorld.class);
-    private final WorldManager wrm = new WorldManager();
+    private final PrivateWorld plugin  = PrivateWorld.getPlugin(PrivateWorld.class);
+    private final WorldManager worldMgr = new WorldManager();
     private final Player p;
 
     private int page = 1;
@@ -61,8 +61,8 @@ public class GUI_Workshop_Presets implements Listener {
 
     private void loadPage() {
         inv.clear();
-        WorkshopManager wsm = wm.workshopManager;
-        presetIds = wsm.getAllPresetIds();
+        WorkshopManager workshopMgr = plugin.workshopManager;
+        presetIds = workshopMgr.getAllPresetIds();
 
         if (presetIds.isEmpty()) {
             inv.setItem(22, makeItem(Material.BARRIER,
@@ -73,9 +73,9 @@ public class GUI_Workshop_Presets implements Listener {
             int end   = Math.min(page * PAGE_SIZE, presetIds.size());
             for (int i = start; i < end; i++) {
                 String id         = presetIds.get(i);
-                String name       = wsm.getPresetName(id);
-                String authorName = wsm.getPresetAuthorName(id);
-                UUID   authorId   = wsm.getPresetAuthor(id);
+                String name       = workshopMgr.getPresetName(id);
+                String authorName = workshopMgr.getPresetAuthorName(id);
+                UUID   authorId   = workshopMgr.getPresetAuthor(id);
                 boolean isOwn = authorId != null && authorId.equals(p.getUniqueId());
 
                 List<String> lore = new ArrayList<>();
@@ -133,22 +133,22 @@ public class GUI_Workshop_Presets implements Listener {
         }
 
         if (slot == SLOT_SAVE) {
-            if (wrm.wcon(player.getWorld()) == null
-                    || !wrm.wcon(player.getWorld()).getUniqueId().equals(player.getUniqueId())) {
+            if (worldMgr.getWorldOwner(player.getWorld()) == null
+                    || !worldMgr.getWorldOwner(player.getWorld()).getUniqueId().equals(player.getUniqueId())) {
                 player.sendMessage(ChatColor.RED + "본인 월드에서만 프리셋을 저장할 수 있습니다");
                 return;
             }
             player.closeInventory();
             player.sendMessage(ChatColor.GREEN + "채팅으로 프리셋 이름을 입력하세요. 취소하려면 Quit 을 입력하세요.");
             Chatting cht = new Chatting();
-            cht.Chatset(player, "WorkshopSave", player.getWorld());
+            cht.startChatInput(player, "WorkshopSave", player.getWorld());
             return;
         }
 
         if (slot == SLOT_BACK) {
             player.closeInventory();
             GUI_Workshop ws = new GUI_Workshop(player);
-            Bukkit.getPluginManager().registerEvents(ws, wm);
+            Bukkit.getPluginManager().registerEvents(ws, plugin);
             ws.openInventory(player);
             return;
         }
@@ -163,27 +163,27 @@ public class GUI_Workshop_Presets implements Listener {
             int idx = (page - 1) * PAGE_SIZE + slot;
             if (idx >= presetIds.size()) return;
             String id = presetIds.get(idx);
-            WorkshopManager wsm = wm.workshopManager;
+            WorkshopManager workshopMgr = plugin.workshopManager;
 
             if (e.isRightClick()) {
-                UUID authorId = wsm.getPresetAuthor(id);
+                UUID authorId = workshopMgr.getPresetAuthor(id);
                 if ((authorId == null || !authorId.equals(player.getUniqueId())) && !player.isOp()) {
                     player.sendMessage(ChatColor.RED + "자신의 프리셋만 삭제할 수 있습니다");
                     return;
                 }
-                String name = wsm.getPresetName(id);
-                wsm.deletePreset(id);
+                String name = workshopMgr.getPresetName(id);
+                workshopMgr.deletePreset(id);
                 player.sendMessage(ChatColor.GREEN + "프리셋 '" + ChatColor.YELLOW + name + ChatColor.GREEN + "' 이 삭제되었습니다");
                 loadPage();
             } else {
-                if (wrm.wcon(player.getWorld()) == null
-                        || !wrm.wcon(player.getWorld()).getUniqueId().equals(player.getUniqueId())) {
+                if (worldMgr.getWorldOwner(player.getWorld()) == null
+                        || !worldMgr.getWorldOwner(player.getWorld()).getUniqueId().equals(player.getUniqueId())) {
                     player.sendMessage(ChatColor.RED + "본인 월드에서만 프리셋을 적용할 수 있습니다");
                     return;
                 }
-                if (wsm.applyPreset(id, player.getWorld())) {
+                if (workshopMgr.applyPreset(id, player.getWorld())) {
                     player.sendMessage(ChatColor.GREEN + "프리셋 '"
-                            + ChatColor.YELLOW + wsm.getPresetName(id)
+                            + ChatColor.YELLOW + workshopMgr.getPresetName(id)
                             + ChatColor.GREEN + "' 이 적용되었습니다!");
                     player.closeInventory();
                 } else {

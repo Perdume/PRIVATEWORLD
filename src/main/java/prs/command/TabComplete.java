@@ -1,4 +1,4 @@
-package prs.Command;
+package prs.command;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -14,7 +14,7 @@ import java.util.List;
 
 
 public class TabComplete implements TabCompleter {
-    WorldBanPlayer wb = new WorldBanPlayer();
+    WorldBanPlayer banManager = new WorldBanPlayer();
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
@@ -53,7 +53,7 @@ public class TabComplete implements TabCompleter {
         List<String> list = new ArrayList<>();
         for (OfflinePlayer p : Bukkit.getOfflinePlayers()) {
             if (p.getName() == null) continue;
-            if (!wb.IsPlayerBanned(p, player.getWorld())) {
+            if (!banManager.isPlayerBanned(p, player.getWorld())) {
                 list.add(p.getName());
             }
         }
@@ -65,7 +65,7 @@ public class TabComplete implements TabCompleter {
         List<String> list = new ArrayList<>();
         for (OfflinePlayer p : Bukkit.getOfflinePlayers()) {
             if (p.getName() == null) continue;
-            if (wb.IsPlayerBanned(p, player.getWorld())) {
+            if (banManager.isPlayerBanned(p, player.getWorld())) {
                 list.add(p.getName());
             }
         }

@@ -1,4 +1,4 @@
-package prs.Data;
+package prs.data;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -46,7 +46,7 @@ public class WorldConfig {
         }
         return this.dataconfig;
     }
-    public void saveconfig(){
+    public void saveConfig(){
         if (this.dataconfig == null || this.configfile == null){
             return;
         }
@@ -78,12 +78,12 @@ public class WorldConfig {
         }
         return worldlist;
     }
-    public boolean Removeworld(World w){
+    public boolean removeWorld(World w){
         if(!worldlist.contains(w)) return false;
         worldlist.remove(w);
         return true;
     }
-    public boolean Addworld(World w){
+    public boolean addWorld(World w){
         if(worldlist.contains(w)) return false;
         worldlist.add(w);
         return true;
@@ -96,7 +96,7 @@ public class WorldConfig {
         getConfig().set("Locs.PlayerWorlds", WorldNameList);
         getConfig().set("Locs.DefaultWorlds", DefaultWorlds);
         getConfig().set("Locs.Lobby", lobby);
-        saveconfig();
+        saveConfig();
         return true;
     }
 
@@ -106,12 +106,12 @@ public class WorldConfig {
         DefaultWorlds = (List<String>) getConfig().getList("Locs.DefaultWorlds");
         return DefaultWorlds;
     }
-    public boolean RemoveDefaultworld(String worldname){
+    public boolean removeDefaultWorld(String worldname){
         if(!DefaultWorlds.contains(worldname)) return false;
         DefaultWorlds.remove(worldname);
         return true;
     }
-    public boolean AddDefaultworld(String worldname){
+    public boolean addDefaultWorld(String worldname){
         if(DefaultWorlds.contains(worldname)) return false;
         DefaultWorlds.add(worldname);
         return true;

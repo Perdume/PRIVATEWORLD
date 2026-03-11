@@ -14,8 +14,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
-import prs.Data.UserWorldManager;
-import prs.Main.Chatting;
+import prs.data.UserWorldManager;
+import prs.main.Chatting;
 import prs.privateworld.PrivateWorld;
 import prs.world.WorldBanPlayer;
 import prs.world.WorldManager;
@@ -29,10 +29,10 @@ import java.util.List;
 
 public class ChoosePlayerWorld implements Listener {
     private final Inventory inv;
-    private PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
+    private PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
     private Player p;
-    UserWorldManager uwm;
-    WorldManager wrm = new WorldManager();
+    UserWorldManager worldSettings;
+    WorldManager worldMgr = new WorldManager();
     List<World> WorldTPList = new ArrayList<>();
     OfflinePlayer SelectPlayer;
 
@@ -41,19 +41,19 @@ public class ChoosePlayerWorld implements Listener {
         inv = Bukkit.createInventory(null, 9, "WorldList");
         this.p = p;
         this.SelectPlayer = SelectPlayer;
-        uwm = new UserWorldManager(p.getWorld());
+        worldSettings = new UserWorldManager(p.getWorld());
         // Put the items into the inventory
         initializeItems();
     }
 
     // You can call this whenever you want to put the items in
     public void initializeItems() {
-        List<World> worlds = wm.worldManager.getWorldList();
+        List<World> worlds = plugin.worldManager.getWorldList();
         int i = 0;
         for(World w: worlds){
-            if(wrm.wcon(w) != SelectPlayer) continue;
+            if(worldMgr.getWorldOwner(w) != SelectPlayer) continue;
             WorldTPList.add(w);
-            String name = (String) uwm.getWorldFile().get("Option.Name");
+            String name = (String) worldSettings.getConfig().get("Option.Name");
             if(name == null) name = SelectPlayer.getName() + "의 월드";
             inv.setItem(i, createGuiItem(Material.GRASS_BLOCK, name, ""));
         }
@@ -97,19 +97,19 @@ public class ChoosePlayerWorld implements Listener {
         }
     }
     public void PlayerTeleport(World w){
-        UserWorldManager uwm = new UserWorldManager(w);
-        WorldBanPlayer wb = new WorldBanPlayer();
-        if (uwm.getOption(UserWorldManager.WorldOption.PRIVATE) && SelectPlayer != p) {
+        UserWorldManager worldSettings = new UserWorldManager(w);
+        WorldBanPlayer banManager = new WorldBanPlayer();
+        if (worldSettings.getOption(UserWorldManager.WorldOption.PRIVATE) && SelectPlayer != p) {
             p.sendMessage(ChatColor.RED + "해당 월드는 비공개상태입니다");
             return;
         }
-        if (wb.IsPlayerBanned(p, w)) {
+        if (banManager.isPlayerBanned(p, w)) {
             p.sendMessage(ChatColor.RED + "해당 월드로 들어갈 수 없습니다");
             return;
         }
-        GameMode gameMode = (GameMode) uwm.getWorldFile().get("Option.Gamemode");
+        GameMode gameMode = (GameMode) worldSettings.getConfig().get("Option.Gamemode");
         if(gameMode == null) gameMode = GameMode.ADVENTURE;
-        Location TPloc = (Location) uwm.getWorldFile().get("Option.TeleportLocation");
+        Location TPloc = (Location) worldSettings.getConfig().get("Option.TeleportLocation");
         if(TPloc == null) TPloc = new Location(w, 0, 64, 0);
         p.teleport(TPloc);
         p.setGameMode(gameMode);

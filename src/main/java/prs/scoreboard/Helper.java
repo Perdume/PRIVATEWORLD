@@ -1,4 +1,4 @@
-package prs.ScoreBoard;
+package prs.scoreboard;
 
 import java.util.HashMap;
 import java.util.List;

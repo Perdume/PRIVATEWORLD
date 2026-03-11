@@ -14,8 +14,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
-import prs.Data.UserWorldManager;
-import prs.Main.Chatting;
+import prs.data.UserWorldManager;
+import prs.main.Chatting;
 import prs.privateworld.PrivateWorld;
 import prs.world.WorldManager;
 import redempt.redlib.inventorygui.InventoryGUI;
@@ -28,10 +28,10 @@ import java.util.List;
 
 public class PlayerWorldList implements Listener {
     private final Inventory inv;
-    private PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
+    private PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
     private Player p;
-    UserWorldManager uwm;
-    WorldManager wrm = new WorldManager();
+    UserWorldManager worldSettings;
+    WorldManager worldMgr = new WorldManager();
     List<OfflinePlayer> OfflinePlayerList = new ArrayList<>();
     int page = 1;
 
@@ -39,7 +39,7 @@ public class PlayerWorldList implements Listener {
         // Create a new inventory, with no owner (as this isn't a real inventory), a size of nine, called example
         inv = Bukkit.createInventory(null, 54, "WorldList");
         this.p = p;
-        uwm = new UserWorldManager(p.getWorld());
+        worldSettings = new UserWorldManager(p.getWorld());
         // Put the items into the inventory
         initializeItems();
     }
@@ -57,11 +57,11 @@ public class PlayerWorldList implements Listener {
 
     // You can call this whenever you want to put the items in
     public void initializeItems() {
-        List<World> worlds = wm.worldManager.getWorldList();
+        List<World> worlds = plugin.worldManager.getWorldList();
         int startIndex = (page - 1) * 45;
         int endIndex = Math.min(page * 45, worlds.size());
         for (World s: worlds){
-            OfflinePlayer pl = wrm.wcon(s);
+            OfflinePlayer pl = worldMgr.getWorldOwner(s);
             if (pl == null) continue;
             if (!OfflinePlayerList.contains(pl)) OfflinePlayerList.add(pl);
         }
@@ -119,7 +119,7 @@ public class PlayerWorldList implements Listener {
             OfflinePlayer ofl = OfflinePlayerList.get(e.getRawSlot());
             p.closeInventory();
             ChoosePlayerWorld cpw = new ChoosePlayerWorld(p, ofl);
-            Bukkit.getPluginManager().registerEvents(cpw, wm);
+            Bukkit.getPluginManager().registerEvents(cpw, plugin);
             cpw.openInventory(p);
         }
 
