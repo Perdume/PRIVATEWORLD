@@ -146,6 +146,6 @@ public class UserCommand implements CommandExecutor {
         player.sendMessage(ChatColor.YELLOW + "/privateworld ban <플레이어>" + ChatColor.WHITE + " - 플레이어를 밴합니다");
         player.sendMessage(ChatColor.YELLOW + "/privateworld unban <플레이어>" + ChatColor.WHITE + " - 플레이어 밴을 해제합니다");
         player.sendMessage(ChatColor.YELLOW + "/privateworld head <플레이어>" + ChatColor.WHITE + " - 플레이어 머리를 가져옵니다");
-        player.sendMessage(ChatColor.YELLOW + "/privateworld workshop" + ChatColor.WHITE + " - 워크샵을 엽니다 (프리셋 공유)");
+        player.sendMessage(ChatColor.YELLOW + "/privateworld workshop" + ChatColor.WHITE + " - 워크샵을 엽니다 (파쿠르/PVP 등 콘텐츠 탐색/등록)");
     }
 }

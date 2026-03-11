@@ -40,7 +40,8 @@ public class TabComplete implements TabCompleter {
             if (command.getName().equalsIgnoreCase("privateworldAdmin")) {
                 if (args.length == 1) {
                     return new ArrayList<>(Arrays.asList("addmap", "delmap", "delall", "SetLobby", "Worlds",
-                            "ReloadScore", "TestSpawn", "reload", "workshoplist", "workshopdelete"));
+                            "ReloadScore", "TestSpawn", "reload", "workshoplist", "workshopdelete",
+                            "workshopunpublish"));
                 }
             }
         }

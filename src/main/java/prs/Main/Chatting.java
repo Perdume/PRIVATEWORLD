@@ -7,6 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import prs.Data.UserWorldManager;
+import prs.Data.WorkshopManager;
 import prs.privateworld.PrivateWorld;
 
 import java.util.HashMap;
@@ -42,13 +43,35 @@ public class Chatting implements Listener {
             String presetName = e.getMessage().trim();
             if (presetName.isEmpty()) {
                 e.getPlayer().sendMessage(ChatColor.RED + "프리셋 이름이 비어있습니다. 다시 입력해주세요.");
-                // Keep Chooseing = true so the player can try again
                 return;
             }
             PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
             wm.workshopManager.savePreset(e.getPlayer(), presetName, world.get(e.getPlayer()));
             e.getPlayer().sendMessage(ChatColor.GREEN + "프리셋 '"
-                    + ChatColor.YELLOW + presetName + ChatColor.GREEN + "' 이 워크샵에 저장되었습니다!");
+                    + ChatColor.YELLOW + presetName + ChatColor.GREEN + "' 이 저장되었습니다!");
+            Chooseing.put(e.getPlayer(), false);
+
+        } else if (msgType.startsWith("WorkshopPublish:")) {
+            // msgType format: "WorkshopPublish:<ContentType name>"
+            String typeName = msgType.substring("WorkshopPublish:".length());
+            WorkshopManager.ContentType type;
+            try {
+                type = WorkshopManager.ContentType.valueOf(typeName);
+            } catch (IllegalArgumentException ex) {
+                type = WorkshopManager.ContentType.OTHER;
+            }
+            String title = e.getMessage().trim();
+            if (title.isEmpty()) {
+                e.getPlayer().sendMessage(ChatColor.RED + "제목이 비어있습니다. 다시 입력해주세요.");
+                return;
+            }
+            PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
+            World w = world.get(e.getPlayer());
+            wm.workshopManager.publishWorld(e.getPlayer(), w.getName(), type, title);
+            e.getPlayer().sendMessage(ChatColor.GREEN + "'"
+                    + type.color + title
+                    + ChatColor.GREEN + "' 이(가) 워크샵에 등록되었습니다! ["
+                    + type.color + type.displayName + ChatColor.GREEN + "]");
             Chooseing.put(e.getPlayer(), false);
         }
     }

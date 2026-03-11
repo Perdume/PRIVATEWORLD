@@ -64,6 +64,8 @@ public class WorldManager implements Listener {
     }
     public void Deleteworld(World w) {
         wm.worldManager.Removeworld(w);
+        // Auto-unpublish from Workshop if registered
+        wm.workshopManager.unpublishWorld(w.getName());
         for (Player p: w.getPlayers()){
             p.teleport(wm.worldManager.getLobby());
         }

@@ -1,5 +1,7 @@
 package prs.Data;
 
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -14,18 +16,61 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 /**
- * Manages Workshop presets: named snapshots of a world's option settings
- * that any player can share and apply to their own world.
- *
- * Data is persisted in {@code plugins/Prs/workshop/presets.yml}.
+ * Manages two Workshop sub-systems:
+ * <ol>
+ *   <li><b>Published worlds</b> – players publish their world as a particular
+ *       content type (parkour, PvP, etc.) so others can browse and join it.
+ *       Persisted in {@code plugins/Prs/workshop/published.yml}.</li>
+ *   <li><b>Option presets</b> – named snapshots of world-option settings that
+ *       can be applied to any world.
+ *       Persisted in {@code plugins/Prs/workshop/presets.yml}.</li>
+ * </ol>
  */
 public class WorkshopManager {
 
-    private static final String PRESETS_ROOT = "presets";
+    // -------------------------------------------------------------------------
+    // Content-type catalogue
+    // -------------------------------------------------------------------------
+
+    /**
+     * Game-content categories a world owner can tag their world with when
+     * registering it in the Workshop.
+     */
+    public enum ContentType {
+        PARKOUR  ("파쿠르",    Material.DIAMOND_BOOTS,  ChatColor.AQUA),
+        PVP      ("PVP",      Material.DIAMOND_SWORD,  ChatColor.RED),
+        SANDBOX  ("자유 건축", Material.GRASS_BLOCK,    ChatColor.GREEN),
+        ADVENTURE("어드벤처",  Material.MAP,            ChatColor.GOLD),
+        MINIGAME ("미니게임",  Material.COMPARATOR,     ChatColor.LIGHT_PURPLE),
+        OTHER    ("기타",      Material.BOOK,           ChatColor.GRAY);
+
+        public final String displayName;
+        public final Material icon;
+        public final ChatColor color;
+
+        ContentType(String displayName, Material icon, ChatColor color) {
+            this.displayName = displayName;
+            this.icon = icon;
+            this.color = color;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Internal state
+    // -------------------------------------------------------------------------
+
+    private static final String PRESETS_ROOT   = "presets";
+    private static final String PUBLISHED_ROOT = "worlds";
 
     private final PrivateWorld plugin;
+
+    /** Stores option-snapshot presets. */
     private final File presetFile;
     private FileConfiguration presetConfig;
+
+    /** Stores published-world entries (content browser). */
+    private final File publishedFile;
+    private FileConfiguration publishedConfig;
 
     public WorkshopManager(PrivateWorld plugin) {
         this.plugin = plugin;
@@ -33,22 +78,36 @@ public class WorkshopManager {
         if (!dir.exists() && !dir.mkdirs()) {
             plugin.getLogger().severe("워크샵 디렉토리를 생성할 수 없습니다: " + dir.getAbsolutePath());
         }
-        presetFile = new File(dir, "presets.yml");
+        presetFile    = new File(dir, "presets.yml");
+        publishedFile = new File(dir, "published.yml");
         reload();
     }
 
-    /** Reload presets from disk. */
+    /** Reload both data files from disk. */
     public void reload() {
-        presetConfig = YamlConfiguration.loadConfiguration(presetFile);
+        presetConfig    = YamlConfiguration.loadConfiguration(presetFile);
+        publishedConfig = YamlConfiguration.loadConfiguration(publishedFile);
     }
 
-    private void save() {
+    private void savePresets() {
         try {
             presetConfig.save(presetFile);
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "워크샵 프리셋을 저장할 수 없습니다", e);
         }
     }
+
+    private void savePublished() {
+        try {
+            publishedConfig.save(publishedFile);
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.SEVERE, "워크샵 등록 데이터를 저장할 수 없습니다", e);
+        }
+    }
+
+    // Alias kept so that both preset-section methods (savePreset / deletePreset)
+    // continue calling a single method without cluttering call sites.
+    private void save() { savePresets(); }
 
     // -------------------------------------------------------------------------
     // Queries
@@ -149,5 +208,95 @@ public class WorkshopManager {
         presetConfig.set(PRESETS_ROOT + "." + presetId, null);
         save();
         return true;
+    }
+
+    // =========================================================================
+    // Published-world methods  (content browser)
+    // =========================================================================
+
+    /**
+     * Publish a world in the Workshop under the given {@link ContentType}.
+     *
+     * @param author     the player who owns the world
+     * @param worldName  Bukkit world name (used as the unique key)
+     * @param type       the content category
+     * @param title      human-readable title shown in the GUI
+     */
+    public void publishWorld(Player author, String worldName, ContentType type, String title) {
+        String base = PUBLISHED_ROOT + "." + worldName;
+        publishedConfig.set(base + ".title",      title);
+        publishedConfig.set(base + ".type",        type.name());
+        publishedConfig.set(base + ".author",      author.getUniqueId().toString());
+        publishedConfig.set(base + ".authorName",  author.getName());
+        savePublished();
+    }
+
+    /**
+     * Remove a world from the Workshop.
+     * Returns {@code false} if it was not published.
+     */
+    public boolean unpublishWorld(String worldName) {
+        if (!publishedConfig.contains(PUBLISHED_ROOT + "." + worldName)) return false;
+        publishedConfig.set(PUBLISHED_ROOT + "." + worldName, null);
+        savePublished();
+        return true;
+    }
+
+    /** Returns {@code true} if the world is currently published. */
+    public boolean isPublished(String worldName) {
+        return publishedConfig.contains(PUBLISHED_ROOT + "." + worldName);
+    }
+
+    /** Returns all published world names. */
+    public List<String> getAllPublishedWorlds() {
+        if (!publishedConfig.contains(PUBLISHED_ROOT)) return new ArrayList<>();
+        var section = publishedConfig.getConfigurationSection(PUBLISHED_ROOT);
+        if (section == null) return new ArrayList<>();
+        return new ArrayList<>(section.getKeys(false));
+    }
+
+    /**
+     * Returns world names that are published under the given {@link ContentType}.
+     */
+    public List<String> getPublishedWorldsByType(ContentType type) {
+        List<String> result = new ArrayList<>();
+        for (String worldName : getAllPublishedWorlds()) {
+            if (type.name().equals(publishedConfig.getString(PUBLISHED_ROOT + "." + worldName + ".type"))) {
+                result.add(worldName);
+            }
+        }
+        return result;
+    }
+
+    /** Returns the display title of a published world, or the world name as fallback. */
+    public String getPublishedTitle(String worldName) {
+        return publishedConfig.getString(PUBLISHED_ROOT + "." + worldName + ".title", worldName);
+    }
+
+    /** Returns the {@link ContentType} of a published world, or {@code OTHER} as fallback. */
+    public ContentType getPublishedType(String worldName) {
+        String s = publishedConfig.getString(PUBLISHED_ROOT + "." + worldName + ".type");
+        if (s == null) return ContentType.OTHER;
+        try {
+            return ContentType.valueOf(s);
+        } catch (IllegalArgumentException e) {
+            return ContentType.OTHER;
+        }
+    }
+
+    /** Returns the display name of the author of a published world. */
+    public String getPublishedAuthorName(String worldName) {
+        return publishedConfig.getString(PUBLISHED_ROOT + "." + worldName + ".authorName", "Unknown");
+    }
+
+    /** Returns the UUID of the author of a published world, or {@code null} when absent/invalid. */
+    public UUID getPublishedAuthor(String worldName) {
+        String s = publishedConfig.getString(PUBLISHED_ROOT + "." + worldName + ".author");
+        if (s == null) return null;
+        try {
+            return UUID.fromString(s);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }
