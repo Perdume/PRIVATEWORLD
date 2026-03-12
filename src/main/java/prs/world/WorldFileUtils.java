@@ -7,7 +7,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class WorldManage {
+public class WorldFileUtils {
 
     //Abandoned: 혹시 몰라 남김(코드수정X)
     private World world;

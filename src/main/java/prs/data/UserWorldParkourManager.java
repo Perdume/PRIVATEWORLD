@@ -1,4 +1,4 @@
-package prs.Data;
+package prs.data;
 
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -25,7 +25,7 @@ public class UserWorldParkourManager {
 
     }
 
-    public void Createparkour(){
+    public void createParkourFile(){
 
         if ( !(UserFile.exists()) ) {
             try {
@@ -56,12 +56,12 @@ public class UserWorldParkourManager {
         return UserConfig;
 
     }
-    public File getParkourFiles(){
+    public File getDataFile(){
         return UserFile;
     }
 
 
-    public void saveUserFile(){
+    public void save(){
 
         try {
 

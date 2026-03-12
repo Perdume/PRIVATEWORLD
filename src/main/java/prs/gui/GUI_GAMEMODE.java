@@ -14,22 +14,22 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import prs.Data.UserWorldManager;
+import prs.data.UserWorldManager;
 import prs.privateworld.PrivateWorld;
 
 import java.util.Arrays;
 
 public class GUI_GAMEMODE implements Listener {
     private final Inventory inv;
-    private PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
+    private PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
     private Player p;
-    UserWorldManager uwm;
+    UserWorldManager worldSettings;
 
     public GUI_GAMEMODE(Player p) {
         // Create a new inventory, with no owner (as this isn't a real inventory), a size of nine, called example
         inv = Bukkit.createInventory(null, 9, "Option -> gamemode");
         this.p = p;
-        uwm = new UserWorldManager(p.getWorld());
+        worldSettings = new UserWorldManager(p.getWorld());
         // Put the items into the inventory
         initializeItems();
     }
@@ -83,10 +83,10 @@ public class GUI_GAMEMODE implements Listener {
         if (clickedItem == null || clickedItem.getType().isAir()) return;
 
         final Player p = (Player) e.getWhoClicked();
-        if(e.getRawSlot() == 0) isChanged = uwm.SetGamemode(GameMode.CREATIVE);
-        if(e.getRawSlot() == 2) isChanged = uwm.SetGamemode(GameMode.SURVIVAL);
-        if(e.getRawSlot() == 4) isChanged = uwm.SetGamemode(GameMode.ADVENTURE);
-        if(e.getRawSlot() == 6) isChanged = uwm.SetGamemode(GameMode.SPECTATOR);
+        if(e.getRawSlot() == 0) isChanged = worldSettings.setGameMode(GameMode.CREATIVE);
+        if(e.getRawSlot() == 2) isChanged = worldSettings.setGameMode(GameMode.SURVIVAL);
+        if(e.getRawSlot() == 4) isChanged = worldSettings.setGameMode(GameMode.ADVENTURE);
+        if(e.getRawSlot() == 6) isChanged = worldSettings.setGameMode(GameMode.SPECTATOR);
         if(e.getRawSlot() == 8) e.getWhoClicked().closeInventory();
         if(isChanged){
             e.getWhoClicked().sendMessage(ChatColor.GREEN + "변경되었습니다");

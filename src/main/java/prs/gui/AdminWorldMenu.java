@@ -11,27 +11,27 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import prs.Data.UserWorldManager;
+import prs.data.UserWorldManager;
 import prs.privateworld.PrivateWorld;
 import prs.world.WorldManager;
 
 import java.util.Arrays;
 
-public class Admin_Backdoor implements Listener {
+public class AdminWorldMenu implements Listener {
     private final Inventory inv;
-    private PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
+    private PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
     private Player p;
-    UserWorldManager uwm;
-    WorldManager wrm = new WorldManager();
+    UserWorldManager worldSettings;
+    WorldManager worldMgr = new WorldManager();
     World world;
     WorldList wl;
 
-    public Admin_Backdoor(Player p, World w, WorldList wl ) {//3rd: 불필요한 클래스 생성 방지
+    public AdminWorldMenu(Player p, World w, WorldList wl ) {//3rd: 불필요한 클래스 생성 방지
         // Create a new inventory, with no owner (as this isn't a real inventory), a size of nine, called example
         inv = Bukkit.createInventory(null, 54, "WorldList");
         this.p = p;
         world = w;
-        uwm = new UserWorldManager(p.getWorld());
+        worldSettings = new UserWorldManager(p.getWorld());
         // Put the items into the inventory
         this.wl = wl;
         initializeItems();
@@ -78,11 +78,11 @@ public class Admin_Backdoor implements Listener {
         final Player p = (Player) e.getWhoClicked();
 
         if(e.getRawSlot() == 0){
-            wrm.Deleteworld(world);
+            worldMgr.deleteWorld(world);
         }
         else if(e.getRawSlot() == 1){
-            option option = new option(p, world);
-            Bukkit.getPluginManager().registerEvents(option, wm);
+            WorldOptionMenu option = new WorldOptionMenu(p, world);
+            Bukkit.getPluginManager().registerEvents(option, plugin);
             option.openInventory(p);
         }
 

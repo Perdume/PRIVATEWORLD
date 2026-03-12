@@ -13,8 +13,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
-import prs.Data.UserWorldManager;
-import prs.Main.Chatting;
+import prs.data.UserWorldManager;
+import prs.main.Chatting;
 import prs.privateworld.PrivateWorld;
 import prs.world.WorldManager;
 import redempt.redlib.inventorygui.InventoryGUI;
@@ -27,10 +27,10 @@ import java.util.List;
 
 public class WorldList implements Listener {
     private final Inventory inv;
-    private PrivateWorld wm = PrivateWorld.getPlugin(PrivateWorld.class);
+    private PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
     private Player p;
-    UserWorldManager uwm;
-    WorldManager wrm = new WorldManager();
+    UserWorldManager worldSettings;
+    WorldManager worldMgr = new WorldManager();
     int page = 1;
     List<World> worldList = new ArrayList<>();
 
@@ -38,23 +38,23 @@ public class WorldList implements Listener {
         // Create a new inventory, with no owner (as this isn't a real inventory), a size of nine, called example
         inv = Bukkit.createInventory(null, 54, "WorldList");
         this.p = p;
-        uwm = new UserWorldManager(p.getWorld());
+        worldSettings = new UserWorldManager(p.getWorld());
         // Put the items into the inventory
         initializeItems();
     }
 
     // You can call this whenever you want to put the items in
     public void initializeItems() {
-        List<World> worlds = wm.worldManager.getWorldList();
+        List<World> worlds = plugin.worldManager.getWorldList();
         int startIndex = (page - 1) * 45;
         int endIndex = Math.min(page * 45, worlds.size());
         for (int i = startIndex; i < endIndex; i++) {
             String worldName = worlds.get(i).getName();
             World world = worlds.get(i);
             worldList.add(world);
-            if (world != null && wrm.wcon(world) != null) {
+            if (world != null && worldMgr.getWorldOwner(world) != null) {
                 inv.setItem(i - startIndex, createGuiItem(Material.GRASS_BLOCK, worldName,
-                        ChatColor.GREEN + "Owner: " + wrm.wcon(world).getName()));
+                        ChatColor.GREEN + "Owner: " + worldMgr.getWorldOwner(world).getName()));
             }
         }
         if(page > 1) inv.setItem(45, createGuiItem(Material.ARROW, ChatColor.GREEN + "previous", ChatColor.GREEN + "Go previous Page"));
@@ -106,8 +106,8 @@ public class WorldList implements Listener {
         }
         if(e.getRawSlot() >= 0 && worldList.get(e.getRawSlot()) != null){
             p.closeInventory();
-            Admin_Backdoor cpw = new Admin_Backdoor(p, worldList.get(e.getRawSlot()), this);
-            Bukkit.getPluginManager().registerEvents(cpw, wm);
+            AdminWorldMenu cpw = new AdminWorldMenu(p, worldList.get(e.getRawSlot()), this);
+            Bukkit.getPluginManager().registerEvents(cpw, plugin);
             cpw.openInventory(p);
         }
 
