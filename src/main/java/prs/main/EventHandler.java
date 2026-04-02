@@ -306,5 +306,11 @@ public class EventHandler implements Listener {
         plugin.scriptManager.fire(
                 e.getPlayer().getWorld().getName(), ScriptManager.Trigger.RESPAWN, e.getPlayer());
     }
+
+    /** Clear in-memory script variables when a player disconnects. */
+    @org.bukkit.event.EventHandler
+    public void onPlayerQuit(PlayerQuitEvent e) {
+        prs.data.ScriptDSL.clearPlayerVars(e.getPlayer().getUniqueId());
+    }
 }
 

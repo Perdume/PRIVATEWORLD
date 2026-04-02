@@ -128,6 +128,25 @@ public class UserCommand implements CommandExecutor {
             Bukkit.getPluginManager().registerEvents(ws, plugin);
             ws.openInventory(player);
         }
+        else if (args[0].equalsIgnoreCase("스크립트") || args[0].equalsIgnoreCase("script")) {
+            if (worldMgr.getWorldOwner(player.getWorld()) == null
+                    || !worldMgr.getWorldOwner(player.getWorld()).getUniqueId().equals(player.getUniqueId())) {
+                player.sendMessage(ChatColor.RED + "본인 월드에서만 스크립트를 편집할 수 있습니다");
+                return true;
+            }
+            if (plugin.webScriptServer == null) {
+                player.sendMessage(ChatColor.RED + "웹 에디터가 비활성화되어 있습니다 (config.yml: script-web-port)");
+                return true;
+            }
+            String token = plugin.webScriptServer.issueToken(player, player.getWorld().getName());
+            String host  = plugin.configManager.getScriptWebHost();
+            int    port  = plugin.configManager.getScriptWebPort();
+            String url   = "http://" + host + ":" + port + "/?token=" + token;
+            player.sendMessage(ChatColor.GOLD + "=== 웹 스크립트 에디터 ===");
+            player.sendMessage(ChatColor.GRAY + "아래 링크를 클릭하거나 브라우저에 붙여넣으세요:");
+            player.sendMessage(ChatColor.AQUA + url);
+            player.sendMessage(ChatColor.GRAY + "(링크는 30분 동안 유효합니다)");
+        }
         else {
             player.sendMessage(ChatColor.RED + "알 수 없는 명령어입니다. /privateworld help 를 사용하세요");
         }
@@ -147,5 +166,6 @@ public class UserCommand implements CommandExecutor {
         player.sendMessage(ChatColor.YELLOW + "/privateworld unban <플레이어>" + ChatColor.WHITE + " - 플레이어 밴을 해제합니다");
         player.sendMessage(ChatColor.YELLOW + "/privateworld head <플레이어>" + ChatColor.WHITE + " - 플레이어 머리를 가져옵니다");
         player.sendMessage(ChatColor.YELLOW + "/privateworld workshop" + ChatColor.WHITE + " - 워크샵을 엽니다 (파쿠르/PVP 등 콘텐츠 탐색/등록)");
+        player.sendMessage(ChatColor.YELLOW + "/privateworld script" + ChatColor.WHITE + " - 웹 스크립트 에디터 URL을 받습니다 (본인 월드에서)");
     }
 }

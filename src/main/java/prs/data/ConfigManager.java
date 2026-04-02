@@ -64,4 +64,19 @@ public class ConfigManager {
     public int getMaxWorlds() {
         return getConfig().getInt("max-worlds", 3);
     }
+
+    /**
+     * Returns the port for the embedded web script editor.
+     * 0 means the web editor is disabled.
+     */
+    public int getScriptWebPort() {
+        return getConfig().getInt("script-web-port", 7654);
+    }
+
+    /**
+     * Returns the public hostname/IP shown in editor URLs.
+     */
+    public String getScriptWebHost() {
+        return getConfig().getString("script-web-host", "localhost");
+    }
 }

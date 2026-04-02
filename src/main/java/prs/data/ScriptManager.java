@@ -4,9 +4,6 @@ import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import prs.privateworld.PrivateWorld;
 import prs.world.WorldManager;
 
@@ -15,6 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 /**
  * Manages per-world event-driven scripts.
@@ -79,6 +77,8 @@ public class ScriptManager {
     private final PrivateWorld plugin;
     private final WorldManager worldMgr = new WorldManager();
     private final File scriptsDir;
+    /** DSL interpreter instance (stateless parser, stateful only for player vars). */
+    private final ScriptDSL dsl = new ScriptDSL();
 
     public ScriptManager(PrivateWorld plugin) {
         this.plugin = plugin;
@@ -114,28 +114,65 @@ public class ScriptManager {
     // -------------------------------------------------------------------------
 
     /**
-     * Returns the action lines defined for {@code trigger} in {@code worldName}.
-     * Returns an empty list when no script is set.
+     * Returns the raw DSL text for the given trigger.
+     * Migrates old list-based storage automatically and saves the result.
      */
-    public List<String> getActions(String worldName, Trigger trigger) {
-        List<String> result = loadConfig(worldName).getStringList(trigger.name());
-        return result != null ? result : new ArrayList<>();
+    public String getRawScript(String worldName, Trigger trigger) {
+        FileConfiguration config = loadConfig(worldName);
+        Object value = config.get(trigger.name());
+        if (value instanceof List<?> list) {
+            // Migrate from old action-line list format: join, save, return
+            String migrated = list.stream().map(Object::toString).collect(Collectors.joining("\n"));
+            config.set(trigger.name(), migrated.isBlank() ? null : migrated);
+            saveConfig(worldName, config);
+            return migrated;
+        }
+        if (value instanceof String s) return s;
+        return "";
     }
 
     /**
-     * Overwrites the action list for {@code trigger} in {@code worldName}.
-     * Pass an empty list to remove the trigger's script.
+     * Overwrites the raw DSL text for the given trigger.
+     * Pass an empty string to clear the script.
      */
-    public void setActions(String worldName, Trigger trigger, List<String> actions) {
+    public void setRawScript(String worldName, Trigger trigger, String rawText) {
         FileConfiguration config = loadConfig(worldName);
-        config.set(trigger.name(), actions.isEmpty() ? null : actions);
+        config.set(trigger.name(), rawText.isBlank() ? null : rawText);
         saveConfig(worldName, config);
+    }
+
+    /**
+     * Returns the action lines defined for {@code trigger} in {@code worldName}.
+     * Kept for backward-compat; splits the raw script by line.
+     *
+     * @deprecated Use {@link #getRawScript} / {@link #setRawScript} instead.
+     */
+    @Deprecated
+    public List<String> getActions(String worldName, Trigger trigger) {
+        String raw = getRawScript(worldName, trigger);
+        if (raw.isBlank()) return new ArrayList<>();
+        List<String> lines = new ArrayList<>();
+        for (String line : raw.split("\n", -1)) {
+            String t = line.strip();
+            if (!t.isEmpty() && !t.startsWith("#")) lines.add(t);
+        }
+        return lines;
+    }
+
+    /**
+     * Overwrites the action list for {@code trigger}.
+     *
+     * @deprecated Use {@link #setRawScript} instead.
+     */
+    @Deprecated
+    public void setActions(String worldName, Trigger trigger, List<String> actions) {
+        setRawScript(worldName, trigger, String.join("\n", actions));
     }
 
     /** Returns {@code true} if the world has at least one non-empty script. */
     public boolean hasAnyScript(String worldName) {
         for (Trigger t : Trigger.values()) {
-            if (!getActions(worldName, t).isEmpty()) return true;
+            if (!getRawScript(worldName, t).isBlank()) return true;
         }
         return false;
     }
@@ -155,155 +192,13 @@ public class ScriptManager {
     // -------------------------------------------------------------------------
 
     /**
-     * Fires all actions for {@code trigger} in {@code worldName} for the
-     * given {@code player}.  Does nothing if no actions are defined.
+     * Fires the DSL script for {@code trigger} in {@code worldName} for the
+     * given {@code player}.  Does nothing if no script is set.
      */
     public void fire(String worldName, Trigger trigger, Player player) {
-        List<String> actions = getActions(worldName, trigger);
-        if (actions.isEmpty()) return;
-
+        String rawScript = getRawScript(worldName, trigger);
+        if (rawScript.isBlank()) return;
         World world = Bukkit.getWorld(worldName);
-
-        String worldDisplayName = worldName;
-        if (world != null) {
-            UserWorldManager settings = new UserWorldManager(world);
-            String n = settings.getWorldName();
-            if (n != null && !n.isEmpty()) worldDisplayName = n;
-        }
-
-        String ownerName = "Unknown";
-        if (world != null) {
-            OfflinePlayer owner = worldMgr.getWorldOwner(world);
-            if (owner != null && owner.getName() != null) ownerName = owner.getName();
-        }
-
-        for (String rawLine : actions) {
-            String line = rawLine
-                    .replace("{player}", player.getName())
-                    .replace("{world}",  worldDisplayName)
-                    .replace("{owner}",  ownerName);
-            executeAction(line.trim(), player, world);
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // Action dispatcher
-    // -------------------------------------------------------------------------
-
-    private void executeAction(String line, Player player, World world) {
-        if (line.isEmpty() || line.startsWith("#")) return;
-
-        String lower = line.toLowerCase();
-
-        if (lower.startsWith("broadcast ")) {
-            String msg = ChatColor.translateAlternateColorCodes('&', line.substring(10));
-            if (world != null) {
-                for (Player p : world.getPlayers()) p.sendMessage(msg);
-            } else {
-                player.sendMessage(msg);
-            }
-
-        } else if (lower.startsWith("message ")) {
-            // message <player> <text>
-            String rest = line.substring(8);
-            int sp = rest.indexOf(' ');
-            if (sp < 0) return;
-            Player target = Bukkit.getPlayerExact(rest.substring(0, sp).trim());
-            if (target != null) target.sendMessage(
-                    ChatColor.translateAlternateColorCodes('&', rest.substring(sp + 1)));
-
-        } else if (lower.startsWith("title ")) {
-            // title <player>:<title>:<subtitle>
-            String rest = line.substring(6);
-            String[] parts = rest.split(":", 3);
-            if (parts.length < 2) return;
-            Player target = Bukkit.getPlayerExact(parts[0].trim());
-            if (target == null) return;
-            String title    = ChatColor.translateAlternateColorCodes('&', parts[1]);
-            String subtitle = parts.length >= 3
-                    ? ChatColor.translateAlternateColorCodes('&', parts[2]) : "";
-            target.sendTitle(title, subtitle, 10, 70, 20);
-
-        } else if (lower.startsWith("sound ")) {
-            // sound <player> <sound_name>
-            String rest = line.substring(6);
-            int sp = rest.indexOf(' ');
-            if (sp < 0) return;
-            Player target = Bukkit.getPlayerExact(rest.substring(0, sp).trim());
-            if (target == null) return;
-            try {
-                Sound sound = Sound.valueOf(rest.substring(sp + 1).trim().toUpperCase());
-                target.playSound(target.getLocation(), sound, 1.0f, 1.0f);
-            } catch (IllegalArgumentException ignored) {}
-
-        } else if (lower.startsWith("effect ")) {
-            // effect <player> <effect_name> <duration_ticks> [amplifier]
-            String[] parts = line.substring(7).split(" ");
-            if (parts.length < 3) return;
-            Player target = Bukkit.getPlayerExact(parts[0].trim());
-            if (target == null) return;
-            PotionEffectType type = resolveEffectType(parts[1].trim());
-            if (type == null) return;
-            try {
-                int duration  = Integer.parseInt(parts[2].trim());
-                int amplifier = parts.length >= 4 ? Integer.parseInt(parts[3].trim()) : 0;
-                target.addPotionEffect(new PotionEffect(type, duration, amplifier));
-            } catch (NumberFormatException ignored) {}
-
-        } else if (lower.startsWith("give ")) {
-            // give <player> <material> [amount]
-            String[] parts = line.substring(5).split(" ");
-            if (parts.length < 2) return;
-            Player target = Bukkit.getPlayerExact(parts[0].trim());
-            if (target == null) return;
-            try {
-                Material mat = Material.valueOf(parts[1].trim().toUpperCase());
-                int amount = parts.length >= 3 ? Integer.parseInt(parts[2].trim()) : 1;
-                target.getInventory().addItem(new ItemStack(mat, amount));
-            } catch (IllegalArgumentException ignored) {}
-
-        } else if (lower.startsWith("teleport ")) {
-            // teleport <player> spawn  OR  teleport <player> <x> <y> <z>
-            String[] parts = line.substring(9).split(" ");
-            if (parts.length < 2) return;
-            Player target = Bukkit.getPlayerExact(parts[0].trim());
-            if (target == null) return;
-            if ("spawn".equalsIgnoreCase(parts[1])) {
-                if (world != null) target.teleport(world.getSpawnLocation());
-            } else if (parts.length >= 4) {
-                try {
-                    double x = Double.parseDouble(parts[1]);
-                    double y = Double.parseDouble(parts[2]);
-                    double z = Double.parseDouble(parts[3]);
-                    target.teleport(new Location(target.getWorld(), x, y, z));
-                } catch (NumberFormatException ignored) {}
-            }
-
-        } else if (lower.startsWith("kill ")) {
-            Player target = Bukkit.getPlayerExact(line.substring(5).trim());
-            if (target != null) target.setHealth(0);
-
-        } else if (lower.startsWith("gamemode ")) {
-            // gamemode <player> <mode>
-            String[] parts = line.substring(9).split(" ");
-            if (parts.length < 2) return;
-            Player target = Bukkit.getPlayerExact(parts[0].trim());
-            if (target == null) return;
-            try {
-                GameMode gm = GameMode.valueOf(parts[1].trim().toUpperCase());
-                target.setGameMode(gm);
-            } catch (IllegalArgumentException ignored) {}
-
-        } else if (lower.startsWith("command ")) {
-            // command <cmd> — executed as the triggering player
-            // (bound by the player's own permissions for safety)
-            player.performCommand(line.substring(8).trim());
-        }
-    }
-
-    /** Resolves a potion effect type by name (case-insensitive). */
-    @SuppressWarnings("deprecation")
-    private static PotionEffectType resolveEffectType(String name) {
-        return PotionEffectType.getByName(name.toUpperCase());
+        dsl.execute(rawScript, player, world);
     }
 }

@@ -15,7 +15,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import prs.data.ScriptManager;
-import prs.main.Chatting;
 import prs.privateworld.PrivateWorld;
 import prs.world.WorldManager;
 
@@ -29,16 +28,19 @@ import java.util.List;
  * <h3>Layout (54 slots)</h3>
  * <ul>
  *   <li>Slots 10, 12, 14, 16 – one button per {@link ScriptManager.Trigger}
- *       (left-click = edit, right-click = clear)</li>
- *   <li>Slot 22 – usage reference / info item</li>
+ *       (right-click = clear)</li>
+ *   <li>Slot 22 – open web editor (get URL)</li>
  *   <li>Slot 49 – back to Workshop</li>
  * </ul>
+ *
+ * <p>Script editing is done via the web browser editor.
+ * Use {@code /privateworld script} in-game or click slot 22 to get the URL.
  */
 public class GUI_WorldScript implements Listener {
 
     private static final int[] TRIGGER_SLOTS = {10, 12, 14, 16};
-    private static final int SLOT_INFO = 22;
-    private static final int SLOT_BACK = 49;
+    private static final int SLOT_WEB_OPEN = 22;
+    private static final int SLOT_BACK     = 49;
 
     private final Inventory inv;
     private final PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
@@ -64,46 +66,47 @@ public class GUI_WorldScript implements Listener {
 
         for (int i = 0; i < triggers.length; i++) {
             ScriptManager.Trigger trigger = triggers[i];
-            List<String> actions = scriptMgr.getActions(world.getName(), trigger);
+            String raw = scriptMgr.getRawScript(world.getName(), trigger);
+            long lineCount = raw.isBlank() ? 0 : raw.lines().filter(l -> !l.isBlank() && !l.stripLeading().startsWith("#")).count();
             Material mat = triggerMaterial(trigger);
 
             List<String> lore = new ArrayList<>();
             lore.add(ChatColor.GRAY + trigger.description);
-            lore.add(ChatColor.GRAY + "액션 수: " + ChatColor.WHITE + actions.size() + "개");
-            if (!actions.isEmpty()) {
+            lore.add(ChatColor.GRAY + "스크립트 줄 수: " + ChatColor.WHITE + lineCount + "줄");
+            if (!raw.isBlank()) {
                 lore.add(ChatColor.DARK_GRAY + "--- 미리보기 ---");
-                for (int j = 0; j < Math.min(3, actions.size()); j++) {
-                    lore.add(ChatColor.GRAY + actions.get(j));
+                String[] lines = raw.split("\n", -1);
+                int shown = 0;
+                for (String line : lines) {
+                    if (shown >= 3) break;
+                    String t = line.strip();
+                    if (!t.isEmpty() && !t.startsWith("#")) {
+                        lore.add(ChatColor.GRAY + (t.length() > 38 ? t.substring(0, 35) + "…" : t));
+                        shown++;
+                    }
                 }
-                if (actions.size() > 3) {
-                    lore.add(ChatColor.DARK_GRAY + "... +" + (actions.size() - 3) + "개 더");
-                }
+                long remaining = lineCount - shown;
+                if (remaining > 0) lore.add(ChatColor.DARK_GRAY + "... +" + remaining + "줄 더");
             }
-            lore.add(ChatColor.AQUA + "좌클릭: " + ChatColor.WHITE + "스크립트 편집");
-            lore.add(ChatColor.RED  + "우클릭: " + ChatColor.WHITE + "스크립트 초기화");
+            lore.add(ChatColor.RED + "우클릭: " + ChatColor.WHITE + "스크립트 초기화");
 
             inv.setItem(TRIGGER_SLOTS[i], makeItem(mat,
                     ChatColor.GOLD + trigger.displayName + " 이벤트",
                     lore.toArray(new String[0])));
         }
 
-        inv.setItem(SLOT_INFO, makeItem(Material.BOOK,
-                ChatColor.YELLOW + "스크립트 사용법",
-                ChatColor.GRAY  + "이벤트 버튼을 클릭하면 스크립트를 편집합니다.",
-                ChatColor.GRAY  + "한 줄씩 액션을 입력하고 done 으로 저장하세요.",
-                ChatColor.WHITE + "지원 액션:",
-                ChatColor.AQUA  + "broadcast <메시지>",
-                ChatColor.AQUA  + "message {player} <메시지>",
-                ChatColor.AQUA  + "title {player}:<제목>:<부제목>",
-                ChatColor.AQUA  + "sound {player} <효과음>",
-                ChatColor.AQUA  + "effect {player} <효과> <틱> <레벨>",
-                ChatColor.AQUA  + "give {player} <아이템> [수량]",
-                ChatColor.AQUA  + "teleport {player} <x> <y> <z>",
-                ChatColor.AQUA  + "teleport {player} spawn",
-                ChatColor.AQUA  + "kill {player}",
-                ChatColor.AQUA  + "gamemode {player} <모드>",
-                ChatColor.AQUA  + "command <명령어>",
-                ChatColor.YELLOW + "변수: {player}, {world}, {owner}"));
+        // Web editor button
+        boolean hasScript = scriptMgr.hasAnyScript(world.getName());
+        boolean webEnabled = plugin.webScriptServer != null;
+        inv.setItem(SLOT_WEB_OPEN, makeItem(Material.COMMAND_BLOCK,
+                ChatColor.GREEN + "웹 에디터 열기",
+                webEnabled
+                        ? ChatColor.GRAY + "스크립트를 브라우저에서 편집합니다."
+                        : ChatColor.RED  + "(웹 에디터가 비활성화되어 있습니다)",
+                hasScript
+                        ? ChatColor.AQUA + "스크립트 있음 – 클릭하여 링크 받기"
+                        : ChatColor.GRAY + "스크립트 없음 – 클릭하여 링크 받기",
+                ChatColor.DARK_GRAY + "또는 /privateworld script 사용"));
 
         inv.setItem(SLOT_BACK, makeItem(Material.NETHER_STAR, ChatColor.YELLOW + "워크샵으로"));
     }
@@ -153,51 +156,47 @@ public class GUI_WorldScript implements Listener {
             return;
         }
 
+        if (slot == SLOT_WEB_OPEN) {
+            if (!isOwner(player)) {
+                player.sendMessage(ChatColor.RED + "본인 월드에서만 스크립트를 편집할 수 있습니다.");
+                return;
+            }
+            if (plugin.webScriptServer == null) {
+                player.sendMessage(ChatColor.RED + "웹 에디터가 비활성화되어 있습니다 (config.yml: script-web-port)");
+                return;
+            }
+            player.closeInventory();
+            String token = plugin.webScriptServer.issueToken(player, world.getName());
+            String host  = plugin.configManager.getScriptWebHost();
+            int    port  = plugin.configManager.getScriptWebPort();
+            String url   = "http://" + host + ":" + port + "/?token=" + token;
+            player.sendMessage(ChatColor.GOLD + "=== 웹 스크립트 에디터 ===");
+            player.sendMessage(ChatColor.GRAY + "아래 링크를 클릭하거나 브라우저에 붙여넣으세요:");
+            player.sendMessage(ChatColor.AQUA + url);
+            player.sendMessage(ChatColor.GRAY + "(링크는 30분 동안 유효합니다)");
+            return;
+        }
+
         ScriptManager.Trigger[] triggers = ScriptManager.Trigger.values();
         for (int i = 0; i < triggers.length; i++) {
             if (TRIGGER_SLOTS[i] != slot) continue;
-
             ScriptManager.Trigger trigger = triggers[i];
-
             if (e.isRightClick()) {
-                plugin.scriptManager.setActions(world.getName(), trigger, new ArrayList<>());
-                player.sendMessage(ChatColor.GREEN + trigger.displayName
-                        + " 이벤트 스크립트가 초기화되었습니다.");
-                loadPage();
-            } else {
-                if (worldMgr.getWorldOwner(world) == null
-                        || !worldMgr.getWorldOwner(world).getUniqueId().equals(player.getUniqueId())) {
-                    player.sendMessage(ChatColor.RED + "본인 월드에서만 스크립트를 편집할 수 있습니다.");
+                if (!isOwner(player)) {
+                    player.sendMessage(ChatColor.RED + "본인 월드에서만 스크립트를 수정할 수 있습니다.");
                     return;
                 }
-                player.closeInventory();
-                showScriptEditPrompt(player, trigger);
-                Chatting cht = new Chatting();
-                cht.startChatInput(player,
-                        "ScriptEdit:" + world.getName() + ":" + trigger.name(),
-                        world);
+                plugin.scriptManager.setRawScript(world.getName(), trigger, "");
+                player.sendMessage(ChatColor.GREEN + trigger.displayName + " 이벤트 스크립트가 초기화되었습니다.");
+                loadPage();
             }
             return;
         }
     }
 
-    /** Prints the current script and instructions to the player's chat. */
-    private void showScriptEditPrompt(Player player, ScriptManager.Trigger trigger) {
-        List<String> existing = plugin.scriptManager.getActions(world.getName(), trigger);
-        player.sendMessage(ChatColor.GOLD + "=== " + trigger.displayName + " 이벤트 스크립트 편집 ===");
-        if (existing.isEmpty()) {
-            player.sendMessage(ChatColor.GRAY + "(현재 스크립트 없음)");
-        } else {
-            player.sendMessage(ChatColor.GRAY + "현재 스크립트 (" + existing.size() + "줄):");
-            for (int j = 0; j < existing.size(); j++) {
-                player.sendMessage(ChatColor.DARK_GRAY + (j + 1) + ". "
-                        + ChatColor.WHITE + existing.get(j));
-            }
-        }
-        player.sendMessage(ChatColor.GREEN + "액션을 한 줄씩 입력하세요.");
-        player.sendMessage(ChatColor.YELLOW + "  done"  + ChatColor.GRAY + " - 저장");
-        player.sendMessage(ChatColor.RED    + "  Quit"  + ChatColor.GRAY + " - 취소 (기존 스크립트 유지)");
-        player.sendMessage(ChatColor.BLUE   + "  clear" + ChatColor.GRAY + " - 새 목록으로 초기화");
+    private boolean isOwner(Player player) {
+        return worldMgr.getWorldOwner(world) != null
+                && worldMgr.getWorldOwner(world).getUniqueId().equals(player.getUniqueId());
     }
 
     @EventHandler

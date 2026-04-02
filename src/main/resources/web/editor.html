@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>월드 스크립트 에디터 – PrivateWorld</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/comment/comment.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1e1e2e;--surface:#313244;--surface2:#45475a;
+  --text:#cdd6f4;--subtext:#a6adc8;--green:#a6e3a1;
+  --blue:#89b4fa;--teal:#94e2d5;--yellow:#f9e2af;
+  --red:#f38ba8;--orange:#fab387;--purple:#cba6f7;
+  --accent:#89dceb;--border:#585b70;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif}
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* ── Header ── */
+#header{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:.5rem 1rem;display:flex;align-items:center;gap:1rem;
+  flex-shrink:0;
+}
+#header h1{font-size:1rem;font-weight:600;color:var(--accent)}
+#worldLabel{font-size:.85rem;color:var(--subtext)}
+#statusBadge{
+  margin-left:auto;padding:.2em .7em;border-radius:999px;font-size:.75rem;font-weight:600;
+  transition:background .2s,color .2s;
+}
+.status-saved{background:#1e3a2f;color:var(--green)}
+.status-dirty{background:#3a2e1e;color:var(--yellow)}
+.status-saving{background:#1e2e3a;color:var(--blue)}
+.status-error{background:#3a1e1e;color:var(--red)}
+
+/* ── Toolbar ── */
+#toolbar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:.35rem .75rem;display:flex;align-items:center;gap:.5rem;flex-shrink:0;
+}
+.btn{
+  background:var(--surface2);color:var(--text);border:1px solid var(--border);
+  border-radius:6px;padding:.3em .85em;font-size:.82rem;cursor:pointer;
+  transition:background .15s,border-color .15s;
+}
+.btn:hover{background:var(--border)}
+.btn.primary{background:#1e3a5f;border-color:var(--blue);color:var(--blue)}
+.btn.primary:hover{background:#264a74}
+.btn.danger{background:#3a1e1e;border-color:var(--red);color:var(--red)}
+.btn.danger:hover{background:#4d2020}
+.sep{width:1px;height:1.2em;background:var(--border)}
+
+/* ── Tabs ── */
+#tabs{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 .5rem;display:flex;gap:.15rem;flex-shrink:0;
+}
+.tab{
+  background:transparent;color:var(--subtext);border:none;border-bottom:2px solid transparent;
+  padding:.55rem .9rem;font-size:.85rem;cursor:pointer;
+  transition:color .15s,border-color .15s;position:relative;
+}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab .dot{
+  display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--yellow);margin-left:.35em;vertical-align:middle;opacity:0;
+  transition:opacity .2s;
+}
+.tab .dot.show{opacity:1}
+
+/* ── Main layout ── */
+#main{display:flex;flex:1;overflow:hidden}
+#editorWrapper{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* CodeMirror fill */
+.CodeMirror{flex:1;height:100%;font-size:13.5px;line-height:1.6;font-family:'JetBrains Mono','Fira Code','Consolas',monospace}
+.CodeMirror-scroll{overflow:auto!important}
+#cmContainer{flex:1;overflow:hidden;display:flex;flex-direction:column}
+
+/* ── Sidebar ── */
+#sidebar{
+  width:280px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);
+  overflow-y:auto;display:flex;flex-direction:column;
+  transition:width .2s;
+}
+#sidebar.collapsed{width:0;overflow:hidden}
+#sidebarHeader{
+  padding:.6rem .9rem;font-size:.8rem;font-weight:700;color:var(--subtext);
+  text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.ref-section{border-bottom:1px solid var(--border)}
+.ref-section summary{
+  padding:.5rem .9rem;font-size:.82rem;font-weight:600;color:var(--purple);
+  cursor:pointer;list-style:none;user-select:none;
+}
+.ref-section summary::-webkit-details-marker{display:none}
+.ref-section summary::before{content:"▸ ";font-size:.75em}
+details[open] summary::before{content:"▾ "}
+.ref-table{padding:.2rem .9rem .7rem;font-size:.78rem;line-height:1.7}
+.ref-row{display:grid;grid-template-columns:1fr 1fr;gap:.2em .5em;color:var(--subtext)}
+.ref-row code{
+  background:var(--bg);padding:.05em .3em;border-radius:3px;
+  color:var(--teal);font-size:.88em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ref-row span{color:var(--subtext)}
+.ref-block code{
+  display:block;background:var(--bg);padding:.3em .6em;border-radius:4px;
+  color:var(--green);font-size:.82em;margin:.2rem 0;white-space:pre;overflow-x:auto;
+}
+.ref-block{padding:.2rem .9rem .7rem}
+.ref-block p{font-size:.78rem;color:var(--subtext);margin:.2rem 0}
+
+/* ── Custom DSL syntax tokens (Dracula overrides) ── */
+.cm-s-dracula .cm-keyword{color:#ff79c6}
+.cm-s-dracula .cm-def{color:#50fa7b}
+.cm-s-dracula .cm-atom{color:#8be9fd}
+.cm-s-dracula .cm-variable-2{color:#f1fa8c}
+.cm-s-dracula .cm-string{color:#f1fa8c}
+.cm-s-dracula .cm-comment{color:#6272a4;font-style:italic}
+.cm-s-dracula .cm-number{color:#bd93f9}
+
+/* ── Toast ── */
+#toast{
+  position:fixed;bottom:1.2rem;right:1.2rem;
+  background:var(--surface2);color:var(--text);
+  padding:.6rem 1.1rem;border-radius:8px;font-size:.85rem;
+  opacity:0;pointer-events:none;transition:opacity .25s;
+  border:1px solid var(--border);z-index:999;
+}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <div id="header">
+    <h1>⚡ PrivateWorld 스크립트 에디터</h1>
+    <span id="worldLabel">로딩 중…</span>
+    <span id="statusBadge" class="status-saved">저장됨</span>
+  </div>
+
+  <!-- Toolbar -->
+  <div id="toolbar">
+    <button class="btn primary" id="saveBtn" title="Ctrl+S">💾 저장</button>
+    <button class="btn danger" id="clearBtn">🗑 초기화</button>
+    <div class="sep"></div>
+    <button class="btn" id="refBtn">📖 레퍼런스</button>
+  </div>
+
+  <!-- Trigger tabs -->
+  <div id="tabs">
+    <button class="tab active" data-t="ENTER">📥 입장 <span class="dot" id="dot-ENTER"></span></button>
+    <button class="tab" data-t="LEAVE">📤 퇴장 <span class="dot" id="dot-LEAVE"></span></button>
+    <button class="tab" data-t="DEATH">💀 사망 <span class="dot" id="dot-DEATH"></span></button>
+    <button class="tab" data-t="RESPAWN">♻ 리스폰 <span class="dot" id="dot-RESPAWN"></span></button>
+  </div>
+
+  <!-- Editor + sidebar -->
+  <div id="main">
+    <div id="editorWrapper">
+      <div id="cmContainer">
+        <textarea id="editorTextarea"></textarea>
+      </div>
+    </div>
+    <div id="sidebar">
+      <div id="sidebarHeader">📖 액션 레퍼런스</div>
+
+      <details class="ref-section" open>
+        <summary>📢 메시지 / 알림</summary>
+        <div class="ref-table">
+          <div class="ref-row"><code>broadcast &lt;텍스트&gt;</code><span>월드 전체에 채팅 전송</span></div>
+          <div class="ref-row"><code>message {player} &lt;텍스트&gt;</code><span>특정 플레이어에게 채팅</span></div>
+          <div class="ref-row"><code>title {player}: &lt;제목&gt;: &lt;부제목&gt;</code><span>화면 타이틀</span></div>
+          <div class="ref-row"><code>actionbar {player} &lt;텍스트&gt;</code><span>액션바 메시지</span></div>
+          <div class="ref-row"><code>sound {player} &lt;효과음&gt;</code><span>사운드 재생</span></div>
+        </div>
+      </details>
+
+      <details class="ref-section">
+        <summary>⚡ 플레이어 상태</summary>
+        <div class="ref-table">
+          <div class="ref-row"><code>teleport {player} &lt;x&gt; &lt;y&gt; &lt;z&gt;</code><span>좌표 이동</span></div>
+          <div class="ref-row"><code>teleport {player} spawn</code><span>스폰으로 이동</span></div>
+          <div class="ref-row"><code>gamemode {player} &lt;모드&gt;</code><span>생존/창조/어드벤처/관전</span></div>
+          <div class="ref-row"><code>kill {player}</code><span>즉사</span></div>
+          <div class="ref-row"><code>heal {player}</code><span>체력 회복</span></div>
+          <div class="ref-row"><code>feed {player}</code><span>배고픔 회복</span></div>
+          <div class="ref-row"><code>setlevel {player} &lt;숫자&gt;</code><span>경험치 레벨 설정</span></div>
+          <div class="ref-row"><code>setspeed {player} walk &lt;값&gt;</code><span>이동속도 (기본 0.2)</span></div>
+          <div class="ref-row"><code>setspeed {player} fly &lt;값&gt;</code><span>비행속도 (기본 0.1)</span></div>
+        </div>
+      </details>
+
+      <details class="ref-section">
+        <summary>🧪 효과 / 아이템</summary>
+        <div class="ref-table">
+          <div class="ref-row"><code>effect {player} speed 200 1</code><span>포션 효과 (틱, 레벨)</span></div>
+          <div class="ref-row"><code>cleareffects {player}</code><span>모든 효과 제거</span></div>
+          <div class="ref-row"><code>give {player} DIAMOND 3</code><span>아이템 지급</span></div>
+          <div class="ref-row"><code>clearinventory {player}</code><span>인벤토리 비우기</span></div>
+        </div>
+      </details>
+
+      <details class="ref-section">
+        <summary>🌍 월드</summary>
+        <div class="ref-table">
+          <div class="ref-row"><code>settime &lt;틱&gt;</code><span>시간 설정 (0=새벽)</span></div>
+          <div class="ref-row"><code>setweather clear</code><span>날씨: clear/rain/storm</span></div>
+          <div class="ref-row"><code>command &lt;명령어&gt;</code><span>명령어 실행 (플레이어 권한)</span></div>
+        </div>
+      </details>
+
+      <details class="ref-section">
+        <summary>🔀 조건문</summary>
+        <div class="ref-block">
+          <p>기본 형태:</p>
+          <code>if player is op:
+    message {player} &c관리자
+else:
+    message {player} &7일반</code>
+          <p>조건 목록:</p>
+          <div class="ref-table">
+            <div class="ref-row"><code>player is op</code><span>OP 여부</span></div>
+            <div class="ref-row"><code>player has permission "node"</code><span>권한</span></div>
+            <div class="ref-row"><code>player gamemode is survival</code><span>게임모드</span></div>
+            <div class="ref-row"><code>player health &gt; 10</code><span>체력 비교</span></div>
+            <div class="ref-row"><code>player level &gt; 5</code><span>레벨 비교</span></div>
+            <div class="ref-row"><code>player has DIAMOND</code><span>아이템 소지</span></div>
+            <div class="ref-row"><code>not player is op</code><span>부정 조건</span></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="ref-section">
+        <summary>📦 변수</summary>
+        <div class="ref-block">
+          <p>변수는 플레이어별로 메모리에 저장됩니다 (서버 재시작 시 초기화).</p>
+          <code>set {score} to 0
+add 1 to {score}
+remove 1 from {score}
+delete {score}</code>
+          <p>조건에서 사용:</p>
+          <code>if {score} > 10:
+    broadcast &6{player} 점수 10 돌파!
+if {score} equals 0:
+    message {player} 아직 점수가 없습니다
+if {score} is set:
+    broadcast 변수 존재</code>
+          <p>메시지에서 사용: <code>broadcast 점수: {score}</code></p>
+        </div>
+      </details>
+
+      <details class="ref-section">
+        <summary>🎨 색상 코드</summary>
+        <div class="ref-block">
+          <code>&0 &1 &2 &3 &4 &5 &6 &7
+&8 &9 &a &b &c &d &e &f
+&l 굵게  &o 기울임  &n 밑줄
+&m 취소선  &k 난수  &r 초기화</code>
+        </div>
+      </details>
+
+      <details class="ref-section">
+        <summary>🔖 변수 (플레이스홀더)</summary>
+        <div class="ref-table">
+          <div class="ref-row"><code>{player}</code><span>트리거한 플레이어 이름</span></div>
+          <div class="ref-row"><code>{world}</code><span>월드 표시 이름</span></div>
+          <div class="ref-row"><code>{owner}</code><span>월드 소유자 이름</span></div>
+        </div>
+      </details>
+    </div><!-- /sidebar -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<div id="toast"></div>
+
+<script>
+const TOKEN = "{{TOKEN}}";
+const TRIGGERS = ["ENTER","LEAVE","DEATH","RESPAWN"];
+const scripts = {};  // trigger → content string
+const dirty = {};    // trigger → boolean
+let currentTrigger = "ENTER";
+let editor = null;
+let saveTimer = null;
+
+// ── CodeMirror custom mode ─────────────────────────────────────────────────
+CodeMirror.defineSimpleMode("privateworld", {
+  start: [
+    // Comments
+    {regex: /#.*$/, token: "comment"},
+    // String literals
+    {regex: /"(?:[^\\]|\\.)*?"/, token: "string"},
+    // Control flow keywords
+    {regex: /\b(if|else|not)\b/, token: "keyword"},
+    // Variable operations
+    {regex: /\b(set|add|remove|delete)\b/, token: "def"},
+    // Action keywords
+    {regex: /\b(broadcast|message|title|actionbar|sound|effect|cleareffects|give|clearinventory|teleport|kill|heal|feed|gamemode|setlevel|setspeed|settime|setweather|command)\b/, token: "atom"},
+    // Condition keywords
+    {regex: /\b(player|op|permission|health|level|has|is|gamemode|survival|creative|adventure|spectator|walk|fly|spawn|clear|rain|storm)\b/, token: "keyword"},
+    // Placeholders & variables {xxx}
+    {regex: /\{[^}]*\}/, token: "variable-2"},
+    // Color codes &x
+    {regex: /&[0-9a-fk-rA-FK-R]/, token: "string"},
+    // Numbers
+    {regex: /\b\d+(\.\d+)?\b/, token: "number"},
+  ]
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────
+async function init() {
+  // Load world info
+  try {
+    const r = await fetch(`/api/info?token=${TOKEN}`);
+    const data = await r.json();
+    document.getElementById("worldLabel").textContent = data.worldName || "";
+    document.title = `스크립트 – ${data.worldName}`;
+  } catch(e) { console.warn("info fetch failed", e); }
+
+  // Load all scripts
+  try {
+    const r = await fetch(`/api/script?token=${TOKEN}`);
+    const data = await r.json();
+    TRIGGERS.forEach(t => {
+      scripts[t] = data[t] || "";
+      dirty[t] = false;
+    });
+  } catch(e) {
+    TRIGGERS.forEach(t => { scripts[t] = ""; dirty[t] = false; });
+    showStatus("error", "스크립트 로드 실패");
+  }
+
+  // Init CodeMirror
+  editor = CodeMirror.fromTextArea(document.getElementById("editorTextarea"), {
+    mode: "privateworld",
+    theme: "dracula",
+    lineNumbers: true,
+    indentUnit: 4,
+    tabSize: 4,
+    indentWithTabs: false,
+    matchBrackets: true,
+    lineWrapping: false,
+    extraKeys: {
+      "Ctrl-S": () => saveCurrent(),
+      "Cmd-S":  () => saveCurrent(),
+      "Tab": cm => cm.replaceSelection("    ", "end"),
+    }
+  });
+  editor.setSize("100%", "100%");
+  editor.setValue(scripts[currentTrigger]);
+
+  editor.on("change", () => {
+    scripts[currentTrigger] = editor.getValue();
+    if (!dirty[currentTrigger]) {
+      dirty[currentTrigger] = true;
+      refreshDot(currentTrigger);
+    }
+    showStatus("dirty", "수정됨");
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveCurrent, 3000); // auto-save after 3s idle
+  });
+
+  showStatus("saved", "저장됨");
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    const t = tab.dataset.t;
+    if (t === currentTrigger) return;
+    scripts[currentTrigger] = editor.getValue();
+    currentTrigger = t;
+    editor.setValue(scripts[t]);
+    editor.clearHistory();
+    document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.t === t));
+    showStatus(dirty[t] ? "dirty" : "saved", dirty[t] ? "수정됨" : "저장됨");
+  });
+});
+
+function refreshDot(trigger) {
+  const dot = document.getElementById("dot-" + trigger);
+  if (dot) dot.classList.toggle("show", dirty[trigger]);
+}
+
+// ── Save ──────────────────────────────────────────────────────────────────
+async function saveCurrent() {
+  clearTimeout(saveTimer);
+  const content = editor.getValue();
+  showStatus("saving", "저장 중…");
+  try {
+    const r = await fetch(`/api/script?token=${TOKEN}&trigger=${currentTrigger}`, {
+      method: "POST",
+      headers: {"Content-Type": "text/plain; charset=utf-8"},
+      body: content,
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    scripts[currentTrigger] = content;
+    dirty[currentTrigger] = false;
+    refreshDot(currentTrigger);
+    showStatus("saved", "저장됨");
+    toast("✅ 저장되었습니다");
+  } catch(e) {
+    showStatus("error", "저장 실패");
+    toast("❌ 저장 실패: " + e.message);
+  }
+}
+
+document.getElementById("saveBtn").addEventListener("click", saveCurrent);
+
+// ── Clear ─────────────────────────────────────────────────────────────────
+document.getElementById("clearBtn").addEventListener("click", async () => {
+  if (!confirm(`[${currentTrigger}] 스크립트를 초기화하시겠습니까?`)) return;
+  editor.setValue("");
+  scripts[currentTrigger] = "";
+  await saveCurrent();
+});
+
+// ── Reference sidebar toggle ──────────────────────────────────────────────
+document.getElementById("refBtn").addEventListener("click", () => {
+  document.getElementById("sidebar").classList.toggle("collapsed");
+  editor.refresh();
+});
+
+// ── Status badge ──────────────────────────────────────────────────────────
+function showStatus(type, text) {
+  const badge = document.getElementById("statusBadge");
+  badge.className = "status-" + type;
+  badge.textContent = text;
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2500);
+}
+
+// ── Warn on unsaved close ─────────────────────────────────────────────────
+window.addEventListener("beforeunload", e => {
+  if (TRIGGERS.some(t => dirty[t])) {
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
+
+// ── Start ─────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
