@@ -10,6 +10,7 @@ import prs.command.AdminCommand;
 import prs.command.TabComplete;
 import prs.command.UserCommand;
 import prs.data.ConfigManager;
+import prs.data.ScriptManager;
 import prs.data.WorldConfig;
 import prs.data.WorkshopManager;
 import prs.main.Chatting;
@@ -22,6 +23,7 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
     public WorldConfig worldManager;
     public ConfigManager configManager;
     public WorkshopManager workshopManager;
+    public ScriptManager scriptManager;
     public prs.world.WorldManager worlds;
 
     @Override
@@ -30,6 +32,7 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
         this.worldManager = new WorldConfig(this);
         this.configManager = new ConfigManager(this);
         this.workshopManager = new WorkshopManager(this);
+        this.scriptManager = new ScriptManager(this);
         this.worlds = new WorldManager();
         this.getCommand("PrivateWorldAdmin").setExecutor(new AdminCommand());
         this.getCommand("PrivateWorldAdmin").setTabCompleter(new TabComplete());

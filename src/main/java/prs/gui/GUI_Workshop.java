@@ -60,6 +60,7 @@ public class GUI_Workshop implements Listener {
     // Main screen — category button slots (match ContentType ordinals)
     private static final int[] CATEGORY_SLOTS = {10, 12, 14, 28, 30, 32};
     private static final int SLOT_REGISTER     = 40; // "내 월드 등록"
+    private static final int SLOT_SCRIPT_OPEN  = 42; // "월드 스크립트"
     private static final int SLOT_PRESET_OPEN  = 44; // "설정 프리셋"
 
     // Category screen
@@ -122,6 +123,16 @@ public class GUI_Workshop implements Listener {
                     ChatColor.GOLD + "내 월드 등록",
                     statusLore,
                     ChatColor.GRAY + "(콘텐츠 유형을 선택한 뒤 제목을 입력하세요)"));
+
+            // Script editor button – only useful when in own world
+            boolean hasScript = plugin.scriptManager.hasAnyScript(p.getWorld().getName());
+            inv.setItem(SLOT_SCRIPT_OPEN, makeItem(Material.COMMAND_BLOCK,
+                    ChatColor.GREEN + "월드 스크립트",
+                    ChatColor.GRAY + "이벤트(입장/퇴장/사망/리스폰) 발생 시",
+                    ChatColor.GRAY + "실행할 액션을 코드처럼 작성합니다.",
+                    hasScript
+                            ? ChatColor.AQUA + "스크립트 있음 - 클릭하여 편집"
+                            : ChatColor.GRAY + "스크립트 없음 - 클릭하여 작성"));
         }
 
         // Option-preset button (secondary feature)
@@ -300,6 +311,18 @@ public class GUI_Workshop implements Listener {
             GUI_TypeSelect ts = new GUI_TypeSelect(player);
             Bukkit.getPluginManager().registerEvents(ts, plugin);
             ts.openInventory(player);
+            return;
+        }
+
+        if (slot == SLOT_SCRIPT_OPEN) {
+            if (!isInOwnWorld()) {
+                player.sendMessage(ChatColor.RED + "본인 월드에서만 스크립트를 편집할 수 있습니다");
+                return;
+            }
+            player.closeInventory();
+            GUI_WorldScript scriptGui = new GUI_WorldScript(player);
+            Bukkit.getPluginManager().registerEvents(scriptGui, plugin);
+            scriptGui.openInventory(player);
             return;
         }
 
