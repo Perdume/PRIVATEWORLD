@@ -21,6 +21,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
+import prs.data.ScriptManager;
 import prs.data.UserWorldManager;
 import prs.privateworld.PrivateWorld;
 import prs.world.WorldManager;
@@ -264,6 +265,52 @@ public class EventHandler implements Listener {
         if (worldSettings.getOption(UserWorldManager.WorldOption.TIME_LOCK)) {
             e.setCancelled(true);
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Script triggers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Fire ENTER script when a player moves into a private world,
+     * and LEAVE script when a player leaves one.
+     */
+    @org.bukkit.event.EventHandler
+    public void onWorldChange(PlayerChangedWorldEvent e) {
+        Player player = e.getPlayer();
+
+        // Entering a new world → fire ENTER
+        if (worldMgr.getWorldOwner(player.getWorld()) != null) {
+            plugin.scriptManager.fire(player.getWorld().getName(), ScriptManager.Trigger.ENTER, player);
+        }
+
+        // Leaving the old world → fire LEAVE
+        if (worldMgr.getWorldOwner(e.getFrom()) != null) {
+            plugin.scriptManager.fire(e.getFrom().getName(), ScriptManager.Trigger.LEAVE, player);
+        }
+    }
+
+    /** Fire DEATH script when a player dies in a private world. */
+    @org.bukkit.event.EventHandler
+    public void onPlayerDeath(PlayerDeathEvent e) {
+        if (worldMgr.getWorldOwner(e.getEntity().getWorld()) == null) return;
+        plugin.scriptManager.fire(
+                e.getEntity().getWorld().getName(), ScriptManager.Trigger.DEATH, e.getEntity());
+    }
+
+    /** Fire RESPAWN script when a player respawns after dying in a private world. */
+    @org.bukkit.event.EventHandler
+    public void onPlayerRespawn(PlayerRespawnEvent e) {
+        // getPlayer().getWorld() is still the death world at this point
+        if (worldMgr.getWorldOwner(e.getPlayer().getWorld()) == null) return;
+        plugin.scriptManager.fire(
+                e.getPlayer().getWorld().getName(), ScriptManager.Trigger.RESPAWN, e.getPlayer());
+    }
+
+    /** Clear in-memory script variables when a player disconnects. */
+    @org.bukkit.event.EventHandler
+    public void onPlayerQuit(PlayerQuitEvent e) {
+        prs.data.ScriptDSL.clearPlayerVars(e.getPlayer().getUniqueId());
     }
 }
 

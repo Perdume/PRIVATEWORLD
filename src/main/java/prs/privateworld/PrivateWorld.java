@@ -10,11 +10,13 @@ import prs.command.AdminCommand;
 import prs.command.TabComplete;
 import prs.command.UserCommand;
 import prs.data.ConfigManager;
+import prs.data.ScriptManager;
 import prs.data.WorldConfig;
 import prs.data.WorkshopManager;
 import prs.main.Chatting;
 import prs.main.EventHandler;
 import prs.scoreboard.WorldScoreboard;
+import prs.web.WebScriptServer;
 import prs.world.WorldManager;
 
 public final class PrivateWorld extends JavaPlugin implements Listener {
@@ -22,6 +24,8 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
     public WorldConfig worldManager;
     public ConfigManager configManager;
     public WorkshopManager workshopManager;
+    public ScriptManager scriptManager;
+    public WebScriptServer webScriptServer;
     public prs.world.WorldManager worlds;
 
     @Override
@@ -30,7 +34,15 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
         this.worldManager = new WorldConfig(this);
         this.configManager = new ConfigManager(this);
         this.workshopManager = new WorkshopManager(this);
+        this.scriptManager = new ScriptManager(this);
         this.worlds = new WorldManager();
+
+        // Start web script editor
+        int webPort = this.configManager.getScriptWebPort();
+        if (webPort > 0) {
+            this.webScriptServer = new WebScriptServer(this);
+            this.webScriptServer.start(webPort);
+        }
         this.getCommand("PrivateWorldAdmin").setExecutor(new AdminCommand());
         this.getCommand("PrivateWorldAdmin").setTabCompleter(new TabComplete());
         this.getCommand("PrivateWorld").setExecutor(new UserCommand());
@@ -54,5 +66,6 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         worldManager.save();
+        if (webScriptServer != null) webScriptServer.stop();
     }
 }

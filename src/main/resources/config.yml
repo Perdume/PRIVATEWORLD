@@ -2,3 +2,10 @@
 
 # Maximum number of private worlds a player can own (default: 3)
 max-worlds: 3
+
+# Web script editor
+# Port for the embedded HTTP editor (set to 0 to disable)
+script-web-port: 7654
+# Public IP or hostname players use to reach this server
+# Change this to your server's public IP or domain name
+script-web-host: localhost
