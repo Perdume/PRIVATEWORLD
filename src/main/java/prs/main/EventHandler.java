@@ -237,10 +237,15 @@ public class EventHandler implements Listener {
 
     @org.bukkit.event.EventHandler
     public void onSpawn(EntitySpawnEvent e) {
+        if (e.getEntity().getType() == EntityType.COMMAND_BLOCK_MINECART) {
+            e.getEntity().remove();
+            return;
+        }
         NBTEntity nbtent = new NBTEntity(e.getEntity());
         for (String s : nbtent.getKeys()) {
             if (Objects.equals(s, "Effects") || Objects.equals(s, "Particle")
-                    || Objects.equals(s, "ActiveEffects") || Objects.equals(s, "TileEntityData")) {
+                    || Objects.equals(s, "ActiveEffects") || Objects.equals(s, "TileEntityData")
+                    || Objects.equals(s, "Command")) {
                 e.getEntity().remove();
             }
         }
