@@ -193,10 +193,19 @@ public class EventHandler implements Listener {
             e.getPlayer().sendMessage(ChatColor.RED + "[PREVENTION] 해당 명령어는 서버 관리자만 사용할 수 있습니다");
             return;
         }
-        if (base.equals("execute") && arr.contains("in")) {
-            e.setCancelled(true);
-            e.getPlayer().sendMessage(ChatColor.RED + "[PREVENTION] 다른 월드로의 명령 실행은 허용되지 않습니다");
-            return;
+        if (base.equals("execute")) {
+            String currentWorld = e.getPlayer().getWorld().getName();
+            for (int i = 0; i < arr.size() - 1; i++) {
+                if (!arr.get(i).equalsIgnoreCase("in")) continue;
+                String target = arr.get(i + 1);
+                int namespaceIdx = target.indexOf(':');
+                String targetWorld = namespaceIdx != -1 ? target.substring(namespaceIdx + 1) : target;
+                if (!targetWorld.equalsIgnoreCase(currentWorld)) {
+                    e.setCancelled(true);
+                    e.getPlayer().sendMessage(ChatColor.RED + "[PREVENTION] 다른 월드로의 명령 실행은 허용되지 않습니다");
+                    return;
+                }
+            }
         }
 
         if (worldMgr.getWorldOwner(e.getPlayer().getWorld()) != null) {
