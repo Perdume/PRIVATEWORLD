@@ -7,6 +7,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.data.type.RespawnAnchor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandMap;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -21,21 +23,38 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionDefault;
 import prs.data.UserWorldManager;
 import prs.privateworld.PrivateWorld;
 import prs.world.WorldManager;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 public class EventHandler implements Listener {
     private PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
     WorldManager worldMgr = new WorldManager();
+    private static final CommandMap commandMap = resolveCommandMap();
 
-    /** Root commands that must stay restricted to real server operators, regardless of world ownership. */
-    private static final Set<String> DANGEROUS_COMMANDS = Set.of(
-            "op", "deop", "stop", "restart", "ban", "ban-ip", "pardon", "pardon-ip",
-            "whitelist", "kick", "save-all", "save-off", "save-on", "reload",
-            "datapack", "debug", "publish", "perf", "jfr", "banlist");
+    private static CommandMap resolveCommandMap() {
+        try {
+            Field field = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+            field.setAccessible(true);
+            return (CommandMap) field.get(Bukkit.getServer());
+        } catch (ReflectiveOperationException ex) {
+            return null;
+        }
+    }
+
+    /** True if this command is registered with a permission whose default is op-only, matching Bukkit's own classification. */
+    private static boolean isOpOnlyCommand(String base) {
+        if (commandMap == null) return false;
+        Command cmd = commandMap.getCommand(base);
+        if (cmd == null || cmd.getPermission() == null) return false;
+        Permission perm = Bukkit.getPluginManager().getPermission(cmd.getPermission());
+        return perm != null && perm.getDefault() == PermissionDefault.OP;
+    }
 
     @org.bukkit.event.EventHandler
     public void PlayerJoin(PlayerLoginEvent e) {
@@ -188,7 +207,7 @@ public class EventHandler implements Listener {
         int namespace = base.indexOf(':');
         if (namespace != -1) base = base.substring(namespace + 1);
 
-        if (DANGEROUS_COMMANDS.contains(base)) {
+        if (isOpOnlyCommand(base)) {
             e.setCancelled(true);
             e.getPlayer().sendMessage(ChatColor.RED + "[PREVENTION] 해당 명령어는 서버 관리자만 사용할 수 있습니다");
             return;
