@@ -11,9 +11,12 @@ import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
 import prs.privateworld.PrivateWorld;
+import prs.world.WorldManager;
 
 public class PerWorldCommand implements Listener {
     private PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
+    private WorldManager worldMgr = new WorldManager();
+
     @EventHandler
     public void redstoneChanges(BlockRedstoneEvent e){
         Block block = e.getBlock();
@@ -22,9 +25,8 @@ public class PerWorldCommand implements Listener {
             if (block.getType() == Material.AIR) return;
             BlockState state = block.getState();
             if (!(state instanceof CommandBlock cb)) return;
-            if (cb.getCommand().contains("execute") && cb.getCommand().contains("run")){
-                e.setNewCurrent(e.getOldCurrent());
-            }
+            if (worldMgr.getWorldOwner(block.getWorld()) == null) return;
+            e.setNewCurrent(e.getOldCurrent());
         }
     }
 }

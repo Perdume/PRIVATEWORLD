@@ -31,6 +31,12 @@ public class EventHandler implements Listener {
     private PrivateWorld plugin = PrivateWorld.getPlugin(PrivateWorld.class);
     WorldManager worldMgr = new WorldManager();
 
+    /** Root commands that must stay restricted to real server operators, regardless of world ownership. */
+    private static final Set<String> DANGEROUS_COMMANDS = Set.of(
+            "op", "deop", "stop", "restart", "ban", "ban-ip", "pardon", "pardon-ip",
+            "whitelist", "kick", "save-all", "save-off", "save-on", "reload",
+            "datapack", "debug", "publish", "perf", "jfr", "banlist");
+
     @org.bukkit.event.EventHandler
     public void PlayerJoin(PlayerLoginEvent e) {
         e.getPlayer().getInventory().clear();
@@ -75,6 +81,14 @@ public class EventHandler implements Listener {
     @org.bukkit.event.EventHandler
     public void OnPlace(BlockPlaceEvent e) {
         if (worldMgr.getWorldOwner(e.getPlayer().getWorld()) == null) return;
+        Material placed = e.getBlock().getType();
+        if (!e.getPlayer().isOp() && (placed == Material.COMMAND_BLOCK
+                || placed == Material.CHAIN_COMMAND_BLOCK
+                || placed == Material.REPEATING_COMMAND_BLOCK)) {
+            e.setCancelled(true);
+            e.getPlayer().sendMessage(ChatColor.RED + "[PREVENTION] 커맨드블록은 이 월드에 설치할 수 없습니다");
+            return;
+        }
         UserWorldManager worldSettings = new UserWorldManager(e.getPlayer().getWorld());
         if (worldMgr.getWorldOwner(e.getPlayer().getWorld()).getUniqueId().equals(e.getPlayer().getUniqueId())) return;
         if (!worldSettings.getOption(UserWorldManager.WorldOption.CAN_PLACE)) {
@@ -168,6 +182,23 @@ public class EventHandler implements Listener {
             if (s.equals(arr.get(0))) return;
         }
         if (e.getPlayer().isOp()) return;
+
+        String base = arr.get(0).toLowerCase();
+        if (base.startsWith("/")) base = base.substring(1);
+        int namespace = base.indexOf(':');
+        if (namespace != -1) base = base.substring(namespace + 1);
+
+        if (DANGEROUS_COMMANDS.contains(base)) {
+            e.setCancelled(true);
+            e.getPlayer().sendMessage(ChatColor.RED + "[PREVENTION] 해당 명령어는 서버 관리자만 사용할 수 있습니다");
+            return;
+        }
+        if (base.equals("execute") && arr.contains("in")) {
+            e.setCancelled(true);
+            e.getPlayer().sendMessage(ChatColor.RED + "[PREVENTION] 다른 월드로의 명령 실행은 허용되지 않습니다");
+            return;
+        }
+
         if (worldMgr.getWorldOwner(e.getPlayer().getWorld()) != null) {
             UserWorldManager worldSettings = new UserWorldManager(e.getPlayer().getWorld());
             if (!worldSettings.getOption(UserWorldManager.WorldOption.CAN_COMMAND)
