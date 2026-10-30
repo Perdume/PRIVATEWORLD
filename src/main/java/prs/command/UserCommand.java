@@ -9,9 +9,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import prs.gui.ChoosePlayerWorld;
 import prs.gui.GUI_Workshop;
+import prs.gui.GUI_Workshop_Scripts;
 import prs.gui.PlayerWorldList;
 import prs.gui.WorldOptionMenu;
 import prs.privateworld.PrivateWorld;
+import prs.script.ScriptBooks;
 import prs.world.WorldBanPlayer;
 import prs.world.WorldManager;
 
@@ -128,6 +130,19 @@ public class UserCommand implements CommandExecutor {
             Bukkit.getPluginManager().registerEvents(ws, plugin);
             ws.openInventory(player);
         }
+        else if (args[0].equalsIgnoreCase("스크립트") || args[0].equalsIgnoreCase("script")) {
+            if (!plugin.configManager.isScriptEnabled()) {
+                player.sendMessage(ChatColor.RED + "스크립트 기능이 꺼져 있습니다");
+                return true;
+            }
+            if (args.length >= 2 && (args[1].equalsIgnoreCase("guide") || args[1].equalsIgnoreCase("가이드"))) {
+                player.openBook(ScriptBooks.guideBook());
+                return true;
+            }
+            GUI_Workshop_Scripts gs = new GUI_Workshop_Scripts(player, GUI_Workshop_Scripts.Tab.MINE);
+            Bukkit.getPluginManager().registerEvents(gs, plugin);
+            gs.openInventory(player);
+        }
         else {
             player.sendMessage(ChatColor.RED + "알 수 없는 명령어입니다. /privateworld help 를 사용하세요");
         }
@@ -147,5 +162,7 @@ public class UserCommand implements CommandExecutor {
         player.sendMessage(ChatColor.YELLOW + "/privateworld unban <플레이어>" + ChatColor.WHITE + " - 플레이어 밴을 해제합니다");
         player.sendMessage(ChatColor.YELLOW + "/privateworld head <플레이어>" + ChatColor.WHITE + " - 플레이어 머리를 가져옵니다");
         player.sendMessage(ChatColor.YELLOW + "/privateworld workshop" + ChatColor.WHITE + " - 워크샵을 엽니다 (파쿠르/PVP 등 콘텐츠 탐색/등록)");
+        player.sendMessage(ChatColor.YELLOW + "/privateworld script" + ChatColor.WHITE + " - 내 스크립트를 코딩하고 워크샵에 공개합니다");
+        player.sendMessage(ChatColor.YELLOW + "/privateworld script guide" + ChatColor.WHITE + " - 스크립트 문법 가이드를 봅니다");
     }
 }

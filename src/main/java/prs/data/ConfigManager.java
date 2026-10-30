@@ -64,4 +64,35 @@ public class ConfigManager {
     public int getMaxWorlds() {
         return getConfig().getInt("max-worlds", 3);
     }
+
+    // ---- Workshop scripts (config.yml "script" section) ----------------------
+
+    public boolean isScriptEnabled() {
+        return getConfig().getBoolean("script.enabled", true);
+    }
+
+    /** Maximum number of scripts a single player may author. */
+    public int getMaxScriptsPerPlayer() {
+        return getConfig().getInt("script.max-scripts-per-player", 10);
+    }
+
+    /** Maximum number of scripts installed in one world at the same time. */
+    public int getMaxScriptsPerWorld() {
+        return getConfig().getInt("script.max-installed-per-world", 5);
+    }
+
+    /** Maximum script source length in characters. */
+    public int getMaxScriptLength() {
+        return getConfig().getInt("script.max-source-length", 8000);
+    }
+
+    /** Maximum statements one trigger may execute (including after waits). */
+    public int getMaxActionsPerRun() {
+        return getConfig().getInt("script.max-actions-per-run", 200);
+    }
+
+    /** Maximum number of paused (waiting) script runs per world. */
+    public int getMaxPendingPerWorld() {
+        return getConfig().getInt("script.max-pending-per-world", 100);
+    }
 }

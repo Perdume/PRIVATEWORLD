@@ -21,27 +21,29 @@ public class TabComplete implements TabCompleter {
         if (sender instanceof Player player) {
             if (command.getName().equalsIgnoreCase("프라이빗월드")) {
                 if (args.length == 1) {
-                    return new ArrayList<>(Arrays.asList("생성", "삭제", "방문", "옵션", "내월드", "로비", "밴", "언밴", "머리", "도움말", "워크샵"));
+                    return new ArrayList<>(Arrays.asList("생성", "삭제", "방문", "옵션", "내월드", "로비", "밴", "언밴", "머리", "도움말", "워크샵", "스크립트"));
                 }
                 if (args.length == 2) {
                     if (args[0].equalsIgnoreCase("밴")) return getUnbannedPlayers(player);
                     if (args[0].equalsIgnoreCase("언밴")) return getBannedPlayers(player);
+                    if (args[0].equalsIgnoreCase("스크립트")) return new ArrayList<>(Arrays.asList("가이드"));
                 }
             }
             if (command.getName().equalsIgnoreCase("privateworld")) {
                 if (args.length == 1) {
-                    return new ArrayList<>(Arrays.asList("create", "delete", "visit", "option", "myworld", "ban", "unban", "lobby", "head", "help", "workshop"));
+                    return new ArrayList<>(Arrays.asList("create", "delete", "visit", "option", "myworld", "ban", "unban", "lobby", "head", "help", "workshop", "script"));
                 }
                 if (args.length == 2) {
                     if (args[0].equalsIgnoreCase("ban")) return getUnbannedPlayers(player);
                     if (args[0].equalsIgnoreCase("unban")) return getBannedPlayers(player);
+                    if (args[0].equalsIgnoreCase("script")) return new ArrayList<>(Arrays.asList("guide"));
                 }
             }
             if (command.getName().equalsIgnoreCase("PrivateWorldAdmin")) {
                 if (args.length == 1) {
                     return new ArrayList<>(Arrays.asList("addmap", "delmap", "delall", "SetLobby", "Worlds",
                             "ReloadScore", "TestSpawn", "reload", "workshoplist", "workshopdelete",
-                            "workshopunpublish"));
+                            "workshopunpublish", "scriptlist", "scriptunpublish", "scriptdelete"));
                 }
             }
         }

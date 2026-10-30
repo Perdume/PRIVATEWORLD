@@ -10,11 +10,14 @@ import prs.command.AdminCommand;
 import prs.command.TabComplete;
 import prs.command.UserCommand;
 import prs.data.ConfigManager;
+import prs.data.ScriptManager;
 import prs.data.WorldConfig;
 import prs.data.WorkshopManager;
 import prs.main.Chatting;
 import prs.main.EventHandler;
 import prs.scoreboard.WorldScoreboard;
+import prs.script.ScriptListener;
+import prs.script.ScriptRunner;
 import prs.world.WorldManager;
 
 public final class PrivateWorld extends JavaPlugin implements Listener {
@@ -22,6 +25,8 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
     public WorldConfig worldManager;
     public ConfigManager configManager;
     public WorkshopManager workshopManager;
+    public ScriptManager scriptManager;
+    public ScriptRunner scriptRunner;
     public prs.world.WorldManager worlds;
 
     @Override
@@ -30,6 +35,8 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
         this.worldManager = new WorldConfig(this);
         this.configManager = new ConfigManager(this);
         this.workshopManager = new WorkshopManager(this);
+        this.scriptManager = new ScriptManager(this);
+        this.scriptRunner = new ScriptRunner(this, scriptManager);
         this.worlds = new WorldManager();
         this.getCommand("PrivateWorldAdmin").setExecutor(new AdminCommand());
         this.getCommand("PrivateWorldAdmin").setTabCompleter(new TabComplete());
@@ -38,6 +45,8 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
         Bukkit.getServer().getPluginManager().registerEvents(new EventHandler(), this);
         Bukkit.getServer().getPluginManager().registerEvents(new Chatting(), this);
         Bukkit.getServer().getPluginManager().registerEvents(new WorldScoreboard(), this);
+        Bukkit.getServer().getPluginManager().registerEvents(new ScriptListener(this, scriptManager, scriptRunner), this);
+        scriptRunner.start();
         Bukkit.getServer().getPluginManager().registerEvents(this, this);
         // Update scoreboard every 4 seconds (80 ticks) instead of every second
         new BukkitRunnable() {
@@ -53,6 +62,7 @@ public final class PrivateWorld extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (scriptRunner != null) scriptRunner.stop();
         worldManager.save();
     }
 }

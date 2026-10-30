@@ -66,6 +66,7 @@ public class WorldManager implements Listener {
         plugin.worldManager.removeWorld(w);
         // Auto-unpublish from Workshop if registered
         plugin.workshopManager.unpublishWorld(w.getName());
+        plugin.scriptManager.onWorldDeleted(w);
         for (Player p: w.getPlayers()){
             p.teleport(plugin.worldManager.getLobby());
         }

@@ -2,3 +2,17 @@
 
 # Maximum number of private worlds a player can own (default: 3)
 max-worlds: 3
+
+# Workshop scripts: players write code in a Book & Quill and publish it
+script:
+  enabled: true
+  # Scripts a single player can author
+  max-scripts-per-player: 10
+  # Scripts that can be installed in one world at the same time
+  max-installed-per-world: 5
+  # Maximum source length (characters)
+  max-source-length: 8000
+  # Statements one trigger may execute (protects against runaway scripts)
+  max-actions-per-run: 200
+  # Paused (wait) script runs allowed per world
+  max-pending-per-world: 100

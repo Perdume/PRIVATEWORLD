@@ -195,6 +195,7 @@ public class GUI_Workshop_Presets implements Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent e) {
+        if (!e.getInventory().equals(inv)) return;
         InventoryDragEvent.getHandlerList().unregister(this);
         InventoryClickEvent.getHandlerList().unregister(this);
         InventoryCloseEvent.getHandlerList().unregister(this);

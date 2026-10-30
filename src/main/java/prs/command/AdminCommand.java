@@ -31,7 +31,7 @@ public class AdminCommand implements CommandExecutor {
             WorldManager worldMgr = new WorldManager();
             if (args.length == 0) {
                 player.sendMessage(ChatColor.GOLD + "=== PrivateWorld Admin ===");
-                player.sendMessage(ChatColor.YELLOW + "addmap, delmap, delall, SetLobby, Worlds, ReloadScore, TestSpawn, reload, workshoplist, workshopdelete <name>, workshopunpublish <world>");
+                player.sendMessage(ChatColor.YELLOW + "addmap, delmap, delall, SetLobby, Worlds, ReloadScore, TestSpawn, reload, workshoplist, workshopdelete <name>, workshopunpublish <world>, scriptlist, scriptunpublish <name>, scriptdelete <name>");
                 return true;
             }
             try {
@@ -80,6 +80,7 @@ public class AdminCommand implements CommandExecutor {
                 }
                 else if (args[0].equalsIgnoreCase("reload")) {
                     plugin.configManager.reloadConfig();
+                    plugin.scriptManager.reload();
                     player.sendMessage(ChatColor.GREEN + "설정 파일을 다시 로드했습니다");
                 }
                 else if (args[0].equalsIgnoreCase("workshoplist")) {
@@ -131,6 +132,41 @@ public class AdminCommand implements CommandExecutor {
                         player.sendMessage(ChatColor.GREEN + "'" + args[1] + "' 의 워크샵 등록을 취소했습니다");
                     } else {
                         player.sendMessage(ChatColor.RED + "해당 월드를 워크샵에서 찾을 수 없습니다: " + args[1]);
+                    }
+                }
+                else if (args[0].equalsIgnoreCase("scriptlist")) {
+                    java.util.List<String> ids = plugin.scriptManager.getAllScriptIds();
+                    if (ids.isEmpty()) {
+                        player.sendMessage(ChatColor.YELLOW + "등록된 스크립트가 없습니다");
+                    } else {
+                        player.sendMessage(ChatColor.GOLD + "=== 워크샵 스크립트 (" + ids.size() + "개) ===");
+                        for (String id : ids) {
+                            String status = plugin.scriptManager.isPublished(id)
+                                    ? ChatColor.GREEN + "[공개 v" + plugin.scriptManager.getVersion(id) + "] "
+                                    : ChatColor.GRAY + "[비공개] ";
+                            player.sendMessage(status + ChatColor.YELLOW + plugin.scriptManager.getName(id)
+                                    + ChatColor.GRAY + " | " + ChatColor.GREEN + plugin.scriptManager.getAuthorName(id)
+                                    + ChatColor.GRAY + " | 설치 " + plugin.scriptManager.getInstalls(id) + " (" + id + ")");
+                        }
+                    }
+                }
+                else if (args[0].equalsIgnoreCase("scriptunpublish") || args[0].equalsIgnoreCase("scriptdelete")) {
+                    boolean delete = args[0].equalsIgnoreCase("scriptdelete");
+                    if (args.length < 2) {
+                        player.sendMessage(ChatColor.RED + "사용법: /prsadmin " + args[0] + " <스크립트이름|ID>");
+                        return true;
+                    }
+                    String query = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length));
+                    String id = plugin.scriptManager.exists(query) ? query : plugin.scriptManager.findIdByName(query);
+                    if (id == null) {
+                        player.sendMessage(ChatColor.RED + "해당 스크립트를 찾을 수 없습니다: " + query);
+                    } else if (delete) {
+                        plugin.scriptManager.delete(id);
+                        player.sendMessage(ChatColor.GREEN + "스크립트 '" + query + "' 을 삭제했습니다");
+                    } else if (plugin.scriptManager.unpublish(id)) {
+                        player.sendMessage(ChatColor.GREEN + "스크립트 '" + query + "' 의 공개를 취소했습니다");
+                    } else {
+                        player.sendMessage(ChatColor.YELLOW + "공개되지 않은 스크립트입니다: " + query);
                     }
                 }
             } catch (Exception e) {

@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class UserWorldManager {
@@ -131,5 +132,14 @@ public class UserWorldManager {
     }
     public Location getSpawnLocation(){
         return (Location) getConfig().get("Option.TeleportLocation");
+    }
+
+    /** IDs of the Workshop scripts installed in this world (mutable copy). */
+    public List<String> getInstalledScripts(){
+        return new ArrayList<>(getConfig().getStringList("Scripts"));
+    }
+    public void setInstalledScripts(List<String> ids){
+        getConfig().set("Scripts", ids);
+        saveConfig();
     }
 }

@@ -47,9 +47,13 @@ import java.util.UUID;
  *   <li>Slot 53 → next page</li>
  * </ul>
  *
+ * <h3>Scripts</h3>
+ * Slot 16 browses published scripts, slot 34 opens the player's own scripts
+ * (see {@link GUI_Workshop_Scripts}).
+ *
  * <h3>Option-preset feature</h3>
  * The old option-preset sub-system is still accessible through a dedicated
- * button on the main screen (slot 53).
+ * button on the main screen (slot 44).
  */
 public class GUI_Workshop implements Listener {
 
@@ -61,6 +65,8 @@ public class GUI_Workshop implements Listener {
     private static final int[] CATEGORY_SLOTS = {10, 12, 14, 28, 30, 32};
     private static final int SLOT_REGISTER     = 40; // "내 월드 등록"
     private static final int SLOT_PRESET_OPEN  = 44; // "설정 프리셋"
+    private static final int SLOT_SCRIPTS      = 16; // "스크립트 워크샵"
+    private static final int SLOT_MY_SCRIPTS   = 34; // "내 스크립트 코딩"
 
     // Category screen
     private static final int PAGE_SIZE   = 45;
@@ -128,6 +134,23 @@ public class GUI_Workshop implements Listener {
         inv.setItem(SLOT_PRESET_OPEN, makeItem(Material.ENDER_CHEST,
                 ChatColor.LIGHT_PURPLE + "설정 프리셋",
                 ChatColor.GRAY + "월드 설정을 프리셋으로 저장/적용합니다"));
+
+        // Script buttons
+        if (plugin.configManager.isScriptEnabled()) {
+            inv.setItem(SLOT_SCRIPTS, makeItem(Material.COMMAND_BLOCK,
+                    ChatColor.LIGHT_PURPLE + "스크립트 워크샵",
+                    ChatColor.GRAY + "공개된 스크립트: " + ChatColor.WHITE
+                            + plugin.scriptManager.getPublishedScriptIds().size() + "개",
+                    ChatColor.GRAY + "다른 사람이 만든 게임 규칙을",
+                    ChatColor.GRAY + "내 월드에 설치합니다",
+                    ChatColor.AQUA + "클릭하여 둘러봅니다"));
+            inv.setItem(SLOT_MY_SCRIPTS, makeItem(Material.FEATHER,
+                    ChatColor.GOLD + "내 스크립트 코딩",
+                    ChatColor.GRAY + "책과 깃펜에 코드를 써서",
+                    ChatColor.GRAY + "체크포인트, 타이머, 미니게임 규칙 등을",
+                    ChatColor.GRAY + "직접 만들고 워크샵에 공개합니다",
+                    ChatColor.AQUA + "클릭하여 시작합니다"));
+        }
     }
 
     private ItemStack makeTypeItem(ContentType ct, int count) {
@@ -194,6 +217,10 @@ public class GUI_Workshop implements Listener {
         List<String> lore = new ArrayList<>();
         lore.add(ChatColor.GRAY  + "제작자: " + ChatColor.GREEN + authorName);
         lore.add(ChatColor.GRAY  + "월드 상태: " + (online ? ChatColor.GREEN + "온라인" : ChatColor.RED + "오프라인"));
+        if (online) {
+            int scriptCount = plugin.scriptManager.getWorldScripts(Bukkit.getWorld(worldName)).scripts().size();
+            if (scriptCount > 0) lore.add(ChatColor.LIGHT_PURPLE + "스크립트 " + scriptCount + "개 적용됨");
+        }
         lore.add(ChatColor.AQUA  + "좌클릭: " + ChatColor.WHITE + "입장하기");
         if (isOwn || p.isOp()) {
             lore.add(ChatColor.RED + "우클릭: " + ChatColor.WHITE + "등록 취소");
@@ -306,6 +333,15 @@ public class GUI_Workshop implements Listener {
         if (slot == SLOT_PRESET_OPEN) {
             player.closeInventory();
             openPresetGui();
+            return;
+        }
+
+        if (slot == SLOT_SCRIPTS || slot == SLOT_MY_SCRIPTS) {
+            player.closeInventory();
+            GUI_Workshop_Scripts gs = new GUI_Workshop_Scripts(player,
+                    slot == SLOT_SCRIPTS ? GUI_Workshop_Scripts.Tab.PUBLIC : GUI_Workshop_Scripts.Tab.MINE);
+            Bukkit.getPluginManager().registerEvents(gs, plugin);
+            gs.openInventory(player);
         }
     }
 
@@ -351,6 +387,7 @@ public class GUI_Workshop implements Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent e) {
+        if (!e.getInventory().equals(inv)) return;
         InventoryDragEvent.getHandlerList().unregister(this);
         InventoryClickEvent.getHandlerList().unregister(this);
         InventoryCloseEvent.getHandlerList().unregister(this);
