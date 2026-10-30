@@ -34,7 +34,7 @@ public class WorldManager implements Listener {
     public void createPlayerWorld(Player p){
         int maxWorlds = plugin.configManager.getMaxWorlds();
         if (playerWorldCount(p) >= maxWorlds) {
-            p.sendMessage(ChatColor.RED + maxWorlds + "개 이상 만들 수 없습니다");
+            p.sendMessage(ChatColor.RED + "" + maxWorlds + "개 이상 만들 수 없습니다");
             return;
         }
         syncWorldList();

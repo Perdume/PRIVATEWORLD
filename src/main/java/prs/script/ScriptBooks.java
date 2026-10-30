@@ -8,6 +8,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.WritableBookMeta;
 import org.bukkit.persistence.PersistentDataType;
 import prs.privateworld.PrivateWorld;
 
@@ -46,7 +47,7 @@ public final class ScriptBooks {
 
     public static ItemStack editBook(String id, String name, String source) {
         ItemStack book = new ItemStack(Material.WRITABLE_BOOK);
-        BookMeta meta = (BookMeta) book.getItemMeta();
+        WritableBookMeta meta = (WritableBookMeta) book.getItemMeta();
         meta.setDisplayName(ChatColor.AQUA + "[스크립트] " + ChatColor.WHITE + name);
         meta.setLore(Arrays.asList(
                 ChatColor.GRAY + "코드를 쓰고 '완료'를 누르면 저장됩니다",
@@ -69,7 +70,7 @@ public final class ScriptBooks {
     }
 
     /** Joins the pages of a book back into source code. */
-    public static String readSource(BookMeta meta) {
+    public static String readSource(WritableBookMeta meta) {
         List<String> lines = new ArrayList<>();
         for (String page : meta.getPages()) {
             lines.addAll(Arrays.asList(ChatColor.stripColor(page).replace("\r", "").split("\n", -1)));
